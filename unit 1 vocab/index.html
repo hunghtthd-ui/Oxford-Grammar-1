@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trắc nghiệm Từ vựng Unit 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;800&display=swap');
+        
+        body { 
+            font-family: 'Lexend', sans-serif; 
+            background-color: #f0f9ff; 
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .card-shadow { 
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); 
+        }
+
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .option-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* Tối ưu cho mobile: đảm bảo nội dung không bị khuất sau thanh địa chỉ trình duyệt */
+        .min-h-screen-ios {
+            min-height: -webkit-fill-available;
+        }
+    </style>
+</head>
+<body class="min-h-screen min-h-screen-ios flex flex-col items-center justify-center p-4">
+
+    <div id="game-container" class="w-full max-w-md bg-white rounded-[2.5rem] p-6 md:p-8 card-shadow relative overflow-hidden">
+        
+        <!-- Thanh tiến trình -->
+        <div class="w-full bg-gray-100 rounded-full h-3 mb-6">
+            <div id="progress-bar" class="bg-blue-500 h-3 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" style="width: 0%"></div>
+        </div>
+
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col">
+                <span class="text-blue-600 font-extrabold uppercase tracking-widest text-xs">English Class</span>
+                <span class="text-gray-900 font-bold text-lg">Unit 1 Quiz</span>
+            </div>
+            <span id="question-counter" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold text-sm border border-blue-100">
+                1/23
+            </span>
+        </div>
+
+        <div id="quiz-area" class="text-center">
+            <!-- Khu vực hình ảnh -->
+            <div class="relative inline-block mb-6 group">
+                <div class="w-64 h-48 md:w-72 md:h-52 overflow-hidden rounded-[2rem] bg-slate-50 flex items-center justify-center border-4 border-white shadow-inner">
+                    <div id="img-fallback" class="text-7xl hidden">❓</div>
+                    <img id="vocab-image" src="" alt="Vocabulary" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" onerror="handleImageError()">
+                </div>
+                <button onclick="speakWord()" class="absolute -bottom-2 -right-2 bg-blue-600 text-white p-4 rounded-full shadow-xl hover:bg-blue-700 active:scale-90 transition-all z-10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                </button>
+            </div>
+
+            <h2 class="text-gray-500 font-medium mb-6 italic text-sm">"Nhìn hình và chọn từ đúng nhé!"</h2>
+
+            <!-- Lưới đáp án -->
+            <div id="options-grid" class="grid grid-cols-1 gap-3 mb-6">
+                <!-- Nút đáp án sẽ sinh ra ở đây -->
+            </div>
+
+            <div id="feedback" class="h-10 mb-2 font-bold text-lg transition-all duration-300 hidden"></div>
+
+            <button id="next-btn" onclick="nextQuestion()" class="w-full bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-600 active:bg-green-700 transition-all hidden uppercase tracking-widest">
+                Tiếp tục ➔
+            </button>
+        </div>
+
+        <!-- Màn hình kết quả -->
+        <div id="result-screen" class="hidden text-center py-10">
+            <div class="relative inline-block mb-6">
+                <span class="text-7xl">🎉</span>
+                <div class="absolute -top-2 -right-2 bg-yellow-400 text-white text-xs font-black px-2 py-1 rounded-md rotate-12">100%</div>
+            </div>
+            <h1 class="text-3xl font-black text-blue-900 mb-2">XUẤT SẮC!</h1>
+            <p class="text-gray-500 mb-8 px-4">Chúc mừng con đã hoàn thành tất cả từ vựng của Unit 1!</p>
+            <button onclick="restartGame()" class="w-full bg-blue-600 text-white py-4 rounded-full font-black shadow-xl hover:bg-blue-700 active:scale-95 transition-all uppercase">
+                Học lại lần nữa
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const vocabulary = [
+            { word: 'apple', img: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6bcd6?w=400', emoji: '🍎' },
+            { word: 'bus', img: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400', emoji: '🚌' },
+            { word: 'cake', img: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400', emoji: '🍰' },
+            { word: 'dog', img: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=400', emoji: '🐶' },
+            { word: 'elephant', img: 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=400', emoji: '🐘' },
+            { word: 'fish', img: 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?w=400', emoji: '🐟' },
+            { word: 'guitar', img: 'https://images.unsplash.com/photo-1525201548942-d8b8967d0f12?w=400', emoji: '🎸' },
+            { word: 'house', img: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400', emoji: '🏠' },
+            { word: 'insect', img: 'https://images.unsplash.com/photo-1470114755716-3e4299863a1e?w=400', emoji: '🐞' },
+            { word: 'jacket', img: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400', emoji: '🧥' },
+            { word: 'key', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRU3lWI-3G5Tmfk_ZJA-Swj6EgZNqEVIhemQg&s', emoji: '🔑' },
+            { word: 'lamp', img: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400', emoji: '💡' },
+            { word: 'mouse', img: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=400', emoji: '🐭' },
+            { word: 'nose', img: 'https://static.vecteezy.com/system/resources/thumbnails/041/916/132/small/nose-cartoon-illustration-isolated-on-white-background-vector.jpg', emoji: '👃' },
+            { word: 'orange', img: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=400', emoji: '🍊' },
+            { word: 'pencil', img: 'https://images.unsplash.com/photo-1512036667332-235764f723ef?w=400', emoji: '✏️' },
+            { word: 'queen', img: 'https://us.123rf.com/450wm/glebdesign159/glebdesign1592409/glebdesign159240901326/235137438-ilustraci%C3%B3n-de-dibujos-animados-vectoriales-de-la-reina-mujer-real.jpg?ver=6', emoji: '👑' },
+            { word: 'ruler', img: 'https://images.unsplash.com/photo-1586075010633-24701bd6e8b7?w=400', emoji: '📏' },
+            { word: 'sofa', img: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400', emoji: '🛋️' },
+            { word: 'table', img: 'https://images.unsplash.com/photo-1577140917170-285929fb55b7?w=400', emoji: 'Table' },
+            { word: 'umbrella', img: 'https://images.unsplash.com/photo-1520114056694-922117d9d746?w=400', emoji: '☂️' },
+            { word: 'van', img: 'https://images.unsplash.com/photo-1565643834241-e946654b4260?w=400', emoji: '🚐' },
+            { word: 'window', img: 'https://images.unsplash.com/photo-1503708928276-19620ca99240?w=400', emoji: '🪟' }
+        ];
+
+        let currentIndex = 0;
+        let canClick = true;
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function speakWord(text) {
+            const target = text || vocabulary[currentIndex].word;
+            const utterance = new SpeechSynthesisUtterance(target);
+            utterance.lang = 'en-US';
+            utterance.pitch = 1.6; // Giọng trẻ em
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function speakFeedback(msgs) {
+            const msg = msgs[Math.floor(Math.random() * msgs.length)];
+            const utterance = new SpeechSynthesisUtterance(msg);
+            utterance.lang = 'en-US';
+            utterance.pitch = 1.6;
+            window.speechSynthesis.speak(utterance);
+            return msg;
+        }
+
+        function handleImageError() {
+            const img = document.getElementById('vocab-image');
+            const fallback = document.getElementById('img-fallback');
+            img.classList.add('hidden');
+            fallback.classList.remove('hidden');
+            fallback.innerText = vocabulary[currentIndex].emoji;
+        }
+
+        function loadQuestion() {
+            canClick = true;
+            const item = vocabulary[currentIndex];
+            
+            // Cập nhật Progress
+            document.getElementById('question-counter').innerText = `${currentIndex + 1}/${vocabulary.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / vocabulary.length) * 100}%`;
+            
+            // Cập nhật Ảnh
+            const img = document.getElementById('vocab-image');
+            const fallback = document.getElementById('img-fallback');
+            img.classList.remove('hidden');
+            fallback.classList.add('hidden');
+            img.src = item.img;
+            
+            // Reset UI
+            document.getElementById('feedback').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            // Tạo đáp án
+            let options = [item.word];
+            while (options.length < 4) {
+                let randomWord = vocabulary[Math.floor(Math.random() * vocabulary.length)].word;
+                if (!options.includes(randomWord)) {
+                    options.push(randomWord);
+                }
+            }
+            shuffle(options);
+
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full py-4 px-6 text-lg font-bold bg-white border-2 border-gray-100 rounded-2xl shadow-sm text-gray-700 hover:border-blue-300 hover:bg-blue-50";
+                btn.innerText = opt.toUpperCase();
+                btn.onclick = () => checkAnswer(opt, btn);
+                grid.appendChild(btn);
+            });
+
+            // Tự động đọc từ mới
+            setTimeout(() => speakWord(), 500);
+        }
+
+        function checkAnswer(selected, btn) {
+            if (!canClick) return;
+            
+            const correct = vocabulary[currentIndex].word;
+            const feedbackEl = document.getElementById('feedback');
+            
+            if (selected === correct) {
+                canClick = false;
+                btn.classList.replace('bg-white', 'bg-green-100');
+                btn.classList.replace('border-gray-100', 'border-green-500');
+                btn.classList.add('text-green-700', 'scale-105');
+                
+                const msg = speakFeedback(["Awesome!", "Correct!", "Good job!", "Well done!"]);
+                feedbackEl.innerText = msg + " ✨";
+                feedbackEl.className = "h-10 mb-2 font-bold text-xl text-green-600 block";
+                
+                document.getElementById('next-btn').classList.remove('hidden');
+            } else {
+                btn.classList.add('animate-shake', 'bg-red-50', 'border-red-400', 'text-red-600');
+                speakFeedback(["No!", "Try again!"]);
+                feedbackEl.innerText = "Sai rồi, thử lại nhé! ❌";
+                feedbackEl.className = "h-10 mb-2 font-bold text-lg text-red-500 block";
+                
+                setTimeout(() => {
+                    btn.classList.remove('animate-shake');
+                    feedbackEl.classList.add('hidden');
+                }, 1000);
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIndex < vocabulary.length - 1) {
+                currentIndex++;
+                loadQuestion();
+            } else {
+                document.getElementById('quiz-area').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                speakFeedback(["Congratulations! You finished!"]);
+            }
+        }
+
+        function restartGame() {
+            currentIndex = 0;
+            shuffle(vocabulary);
+            document.getElementById('quiz-area').classList.remove('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            loadQuestion();
+        }
+
+        window.onload = () => {
+            shuffle(vocabulary);
+            loadQuestion();
+        };
+    </script>
+</body>
+</html>
