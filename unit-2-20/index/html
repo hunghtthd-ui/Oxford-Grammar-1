@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Quiz 1-20 for Kids</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+        .bouncy {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+        .drop-zone {
+            width: 45px;
+            height: 50px;
+            border-bottom: 3px solid #4A90E2;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 5px;
+            text-transform: uppercase;
+            background: #f8fafc;
+            border-radius: 8px 8px 0 0;
+        }
+        .drag-item {
+            width: 45px;
+            height: 45px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border: 2px solid #3B82F6;
+            border-radius: 12px;
+            cursor: grab;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            user-select: none;
+            touch-action: none;
+        }
+        .drag-item:active { cursor: grabbing; }
+        .dragging { opacity: 0.5; transform: scale(1.1); }
+        .mcq-btn.selected {
+            background-color: #93C5FD !important;
+            border-color: #3B82F6 !important;
+        }
+        .number-emoji {
+            font-size: 6rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center">
+
+    <div id="game-container" class="max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-6 md:p-10 relative overflow-hidden">
+        <!-- Start Screen -->
+        <div id="start-screen" class="text-center py-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-6 bouncy">Number Fun! 🎈</h1>
+            <p class="text-gray-600 text-lg mb-8">Learn numbers 1 to 20 with Drag & Drop!</p>
+            <button onclick="startGame()" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-4 px-10 rounded-full text-2xl transition-all shadow-lg active:scale-95">
+                Start Playing
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div class="bg-blue-100 text-blue-800 px-4 py-1 rounded-full font-bold">
+                    Question <span id="current-index">1</span>/12
+                </div>
+                <div class="flex gap-4 font-bold">
+                    <span class="text-green-600">✔ <span id="stat-correct">0</span></span>
+                    <span class="text-red-600">✘ <span id="stat-wrong">0</span></span>
+                </div>
+            </div>
+
+            <div id="question-content" class="text-center min-h-[300px] flex flex-col justify-center items-center">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="mt-8 flex flex-col items-center gap-4">
+                <div id="feedback-msg" class="h-8 font-bold text-xl transition-all duration-300"></div>
+
+                <div id="action-buttons" class="flex gap-4">
+                    <button id="btn-listen" title="Listen" onclick="repeatAudio()" class="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-full shadow-md active:scale-90">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                        </svg>
+                    </button>
+                    <button id="btn-check" onclick="checkAnswer()" class="bg-green-500 hover:bg-green-600 text-white px-10 py-3 rounded-2xl font-bold text-xl shadow-md active:scale-95">
+                        Check (Enter)
+                    </button>
+                    <button id="btn-next" onclick="nextQuestion()" class="hidden bg-blue-500 hover:bg-blue-600 text-white px-10 py-3 rounded-2xl font-bold text-xl shadow-md active:scale-95">
+                        Next ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center py-10">
+            <h2 class="text-4xl font-bold text-blue-700 mb-6">Excellent Work! 🏆</h2>
+            <div class="bg-blue-50 rounded-3xl p-8 mb-8">
+                <p class="text-5xl font-bold text-blue-600 mb-2"><span id="final-score">0</span>/12</p>
+                <p class="text-gray-500 uppercase tracking-widest font-bold">Total Score</p>
+                <div class="mt-6 flex justify-around text-lg">
+                    <div class="text-green-600">Correct: <span id="final-correct">0</span></div>
+                    <div class="text-red-500">Mistakes: <span id="final-wrong">0</span></div>
+                </div>
+            </div>
+            <button onclick="resetGame()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const numbers = [
+            { val: 1, word: "one", emoji: "1️⃣" }, { val: 2, word: "two", emoji: "2️⃣" },
+            { val: 3, word: "three", emoji: "3️⃣" }, { val: 4, word: "four", emoji: "4️⃣" },
+            { val: 5, word: "five", emoji: "5️⃣" }, { val: 6, word: "six", emoji: "6️⃣" },
+            { val: 7, word: "seven", emoji: "7️⃣" }, { val: 8, word: "eight", emoji: "8️⃣" },
+            { val: 9, word: "nine", emoji: "9️⃣" }, { val: 10, word: "ten", emoji: "🔟" },
+            { val: 11, word: "eleven", emoji: "1️⃣1️⃣" }, { val: 12, word: "twelve", emoji: "1️⃣2️⃣" },
+            { val: 13, word: "thirteen", emoji: "1️⃣3️⃣" }, { val: 14, word: "fourteen", emoji: "1️⃣4️⃣" },
+            { val: 15, word: "fifteen", emoji: "1️⃣5️⃣" }, { val: 16, word: "sixteen", emoji: "1️⃣6️⃣" },
+            { val: 17, word: "seventeen", emoji: "1️⃣7️⃣" }, { val: 18, word: "eighteen", emoji: "1️⃣8️⃣" },
+            { val: 19, word: "nineteen", emoji: "1️⃣9️⃣" }, { val: 20, word: "twenty", emoji: "2️⃣0️⃣" }
+        ];
+
+        let quizQuestions = [];
+        let currentIndex = 0;
+        let attempts = 0;
+        let correctCount = 0;
+        let totalMistakes = 0;
+        let isAnswered = false;
+        let draggedElement = null;
+
+        const synth = window.speechSynthesis;
+        
+        function speak(text) {
+            const utter = new SpeechSynthesisUtterance(text);
+            const voices = synth.getVoices();
+            const preferred = voices.find(v => v.lang.includes('en') && (v.name.includes('Google US English') || v.name.includes('Zira') || v.name.includes('Samantha')));
+            if (preferred) utter.voice = preferred;
+            utter.rate = 0.75;
+            utter.pitch = 1.3;
+            synth.speak(utter);
+        }
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function generateQuiz() {
+            let pool = [];
+            const shuffledPool = [...numbers].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 12; i++) {
+                const type = (i % 3) + 1;
+                const numObj = shuffledPool[i % shuffledPool.length];
+                
+                if (type === 1) {
+                    pool.push({ type: 1, data: numObj });
+                } else if (type === 2) {
+                    const opts = [numObj.val];
+                    while (opts.length < 4) {
+                        const r = Math.floor(Math.random() * 20) + 1;
+                        if (!opts.includes(r)) opts.push(r);
+                    }
+                    pool.push({ type: 2, data: numObj, options: shuffle(opts) });
+                } else {
+                    const n1 = Math.floor(Math.random() * 10) + 1;
+                    const n2 = Math.floor(Math.random() * 10) + 1;
+                    const correct = `${n1}, ${n2}`;
+                    const opts = [correct];
+                    while (opts.length < 4) {
+                        const r1 = Math.floor(Math.random() * 10) + 1;
+                        const r2 = Math.floor(Math.random() * 10) + 1;
+                        const s = `${r1}, ${r2}`;
+                        if (!opts.includes(s)) opts.push(s);
+                    }
+                    pool.push({ type: 3, n1, n2, correctAns: correct, options: shuffle(opts) });
+                }
+            }
+            return shuffle(pool);
+        }
+
+        function startGame() {
+            currentIndex = 0;
+            correctCount = 0;
+            totalMistakes = 0;
+            quizQuestions = generateQuiz();
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            attempts = 0;
+            isAnswered = false;
+            const q = quizQuestions[currentIndex];
+            const content = document.getElementById('question-content');
+            const feedback = document.getElementById('feedback-msg');
+            
+            document.getElementById('current-index').innerText = currentIndex + 1;
+            document.getElementById('stat-correct').innerText = correctCount;
+            document.getElementById('stat-wrong').innerText = totalMistakes;
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('btn-check').classList.remove('hidden');
+            feedback.innerText = "";
+            content.innerHTML = "";
+
+            if (q.type === 1) {
+                // Drag and Drop Logic
+                content.innerHTML = `
+                    <div class="number-emoji mb-6">${q.data.emoji}</div>
+                    <div id="drop-container" class="flex justify-center mb-8">
+                        ${q.data.word.split('').map((_, idx) => `<div class="drop-zone" data-index="${idx}"></div>`).join('')}
+                    </div>
+                    <div id="drag-source" class="flex flex-wrap justify-center gap-3">
+                        ${shuffle(q.data.word.split('').map((l, i) => ({l, i}))).map(item => 
+                            `<div class="drag-item" draggable="true" data-letter="${item.l}" ondragstart="handleDragStart(event)" ontouchstart="handleTouchStart(event)">${item.l.toUpperCase()}</div>`
+                        ).join('')}
+                    </div>
+                `;
+                setupDropZones();
+            } else if (q.type === 2) {
+                content.innerHTML = `
+                    <h2 class="text-6xl font-black text-blue-600 mb-8 uppercase">${q.data.word}</h2>
+                    <div class="grid grid-cols-2 gap-4 w-full px-4">
+                        ${q.options.map(opt => `<button onclick="selectMCQ('${opt}', this)" class="mcq-btn p-6 bg-gray-50 border-4 border-gray-100 rounded-3xl text-4xl font-bold transition-all hover:bg-blue-50 active:scale-95">${opt}</button>`).join('')}
+                    </div>
+                    <input type="hidden" id="ans-input">
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-9xl mb-4">👂</div>
+                    <p class="text-xl text-gray-500 font-bold mb-8">Listen and pick the numbers!</p>
+                    <div class="grid grid-cols-2 gap-4 w-full px-4">
+                        ${q.options.map(opt => `<button onclick="selectMCQ('${opt}', this)" class="mcq-btn p-6 bg-gray-50 border-4 border-gray-100 rounded-3xl text-2xl font-bold transition-all hover:bg-blue-50 active:scale-95">${opt}</button>`).join('')}
+                    </div>
+                    <input type="hidden" id="ans-input">
+                `;
+            }
+            repeatAudio();
+        }
+
+        // Drag & Drop Handlers
+        function handleDragStart(e) {
+            if (isAnswered) { e.preventDefault(); return; }
+            e.dataTransfer.setData('text/plain', e.target.innerText);
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+        }
+
+        function setupDropZones() {
+            const zones = document.querySelectorAll('.drop-zone');
+            zones.forEach(zone => {
+                zone.addEventListener('dragover', e => e.preventDefault());
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    if (isAnswered) return;
+                    const letter = e.dataTransfer.getData('text/plain');
+                    if (zone.innerText === "") {
+                        zone.innerText = letter;
+                        if (draggedElement) draggedElement.style.visibility = 'hidden';
+                    } else {
+                        // Return old letter to source if occupied
+                        const oldLetter = zone.innerText;
+                        const hiddenSource = Array.from(document.querySelectorAll('.drag-item')).find(i => i.innerText === oldLetter && i.style.visibility === 'hidden');
+                        if (hiddenSource) hiddenSource.style.visibility = 'visible';
+                        zone.innerText = letter;
+                        if (draggedElement) draggedElement.style.visibility = 'hidden';
+                    }
+                });
+                // Click to remove letter
+                zone.onclick = () => {
+                    if (isAnswered || zone.innerText === "") return;
+                    const letter = zone.innerText;
+                    const hiddenSource = Array.from(document.querySelectorAll('.drag-item')).find(i => i.innerText === letter && i.style.visibility === 'hidden');
+                    if (hiddenSource) hiddenSource.style.visibility = 'visible';
+                    zone.innerText = "";
+                };
+            });
+            
+            document.querySelectorAll('.drag-item').forEach(item => {
+                item.addEventListener('dragend', () => item.classList.remove('dragging'));
+            });
+        }
+
+        // Simple Touch Support for Mobile
+        function handleTouchStart(e) {
+            if (isAnswered) return;
+            const item = e.target;
+            const letter = item.innerText;
+            // Find first empty zone
+            const emptyZone = Array.from(document.querySelectorAll('.drop-zone')).find(z => z.innerText === "");
+            if (emptyZone) {
+                emptyZone.innerText = letter;
+                item.style.visibility = 'hidden';
+            }
+        }
+
+        function selectMCQ(val, btn) {
+            if (isAnswered) return;
+            document.querySelectorAll('.mcq-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('ans-input').value = val;
+        }
+
+        function repeatAudio() {
+            const q = quizQuestions[currentIndex];
+            if (q.type === 1 || q.type === 2) {
+                speak(q.data.word);
+            } else {
+                speak(`${q.n1} ${q.n2}`);
+            }
+        }
+
+        function checkAnswer() {
+            if (isAnswered) return;
+            const q = quizQuestions[currentIndex];
+            const feedback = document.getElementById('feedback-msg');
+            let isCorrect = false;
+            let solution = "";
+
+            if (q.type === 1) {
+                const zones = document.querySelectorAll('.drop-zone');
+                const userWord = Array.from(zones).map(z => z.innerText.toLowerCase()).join('');
+                isCorrect = (userWord === q.data.word);
+                solution = q.data.word.toUpperCase();
+            } else {
+                const val = document.getElementById('ans-input').value;
+                if (!val) {
+                    feedback.innerText = "Pick an answer first!";
+                    return;
+                }
+                isCorrect = (q.type === 2) ? (parseInt(val) === q.data.val) : (val === q.correctAns);
+                solution = (q.type === 2) ? q.data.val : q.correctAns;
+            }
+
+            if (isCorrect) {
+                handleSuccess();
+            } else {
+                handleFailure(solution);
+            }
+        }
+
+        function handleSuccess() {
+            isAnswered = true;
+            correctCount++;
+            const praises = ["Well done!", "Good job!", "Excellent!", "Very good!"];
+            const msg = praises[Math.floor(Math.random() * praises.length)];
+            const fb = document.getElementById('feedback-msg');
+            fb.innerText = msg;
+            fb.className = "h-8 font-bold text-2xl text-green-500 bouncy";
+            speak(msg);
+            document.getElementById('btn-check').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+
+        function handleFailure(solution) {
+            attempts++;
+            totalMistakes++;
+            document.getElementById('stat-wrong').innerText = totalMistakes;
+            speak("Try again");
+            const fb = document.getElementById('feedback-msg');
+            fb.innerText = "Try again!";
+            fb.className = "h-8 font-bold text-xl text-red-500";
+
+            if (attempts >= 3) {
+                isAnswered = true;
+                fb.innerText = `Answer: ${solution}`;
+                document.getElementById('btn-check').classList.add('hidden');
+                document.getElementById('btn-next').classList.remove('hidden');
+            } else if (quizQuestions[currentIndex].type === 1) {
+                // Reset drop zones on fail
+                document.querySelectorAll('.drop-zone').forEach(z => z.innerText = "");
+                document.querySelectorAll('.drag-item').forEach(i => i.style.visibility = 'visible');
+            }
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < 12) loadQuestion();
+            else showResults();
+        }
+
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = correctCount;
+            document.getElementById('final-correct').innerText = correctCount;
+            document.getElementById('final-wrong').innerText = totalMistakes;
+            speak(correctCount > 8 ? "Wonderful! You are a superstar!" : "Good job! Let's play again!");
+        }
+
+        function resetGame() { startGame(); }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('btn-next').classList.contains('hidden')) nextQuestion();
+                else if (!document.getElementById('quiz-screen').classList.contains('hidden')) checkAnswer();
+                else if (!document.getElementById('start-screen').classList.contains('hidden')) startGame();
+                else if (!document.getElementById('result-screen').classList.contains('hidden')) resetGame();
+            }
+        });
+
+        synth.onvoiceschanged = () => synth.getVoices();
+    </script>
+</body>
+</html>
