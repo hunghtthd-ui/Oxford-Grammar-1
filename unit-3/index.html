@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Articles Practice - A or An</title>
+    <style>
+        :root {
+            --primary-color: #4A90E2;
+            --success-color: #2ECC71;
+            --error-color: #E74C3C;
+            --bg-color: #F0F4F8;
+            --text-color: #2C3E50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+
+        #app {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header-hint {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+            min-height: 2.5rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            color: #7F8C8D;
+        }
+
+        .image-container {
+            font-size: 5rem;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .word-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-transform: lowercase;
+        }
+
+        .highlight-red {
+            color: var(--error-color);
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn-choice {
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 3px solid var(--primary-color);
+            background: white;
+            color: var(--primary-color);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-choice:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-choice:active {
+            transform: scale(0.95);
+        }
+
+        .btn-next {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #feedback {
+            min-height: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .audio-icon-btn {
+            background: #eee;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .screen { display: none; }
+        .active { display: block; }
+
+        .summary-card {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+        <h1>Articles: A or An</h1>
+        <p>Complete 2 parts (10 questions each) to test your knowledge.</p>
+        <button class="btn-next" style="display:block" onclick="startGame()">START PRACTICE</button>
+    </div>
+
+    <!-- Quiz Screen -->
+    <div id="quiz-screen" class="screen">
+        <div id="hint-area" class="header-hint">U E O A I</div>
+        
+        <div class="stats-bar">
+            <span id="part-info">Part 1</span>
+            <span id="question-count">Question: 1/10</span>
+        </div>
+
+        <div class="image-container" id="visual-icon">🍎</div>
+        <br>
+        <button class="audio-icon-btn" onclick="speakCurrentWord()">🔊</button>
+        
+        <div class="word-display" id="word-text">apple</div>
+
+        <div id="feedback"></div>
+
+        <div class="btn-group" id="choice-buttons">
+            <button class="btn-choice" onclick="handleChoice('a')">A</button>
+            <button class="btn-choice" onclick="handleChoice('an')">AN</button>
+        </div>
+
+        <button id="next-btn" class="btn-next" onclick="goToNext()">NEXT QUESTION (Enter)</button>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="screen">
+        <h1>Excellent!</h1>
+        <div class="summary-card">
+            <p>Total Questions: <span id="res-total">20</span></p>
+            <p>Correct Answers: <span id="res-correct" style="color: var(--success-color); font-weight:bold;">0</span></p>
+            <p>Incorrect Attempts: <span id="res-incorrect" style="color: var(--error-color);">0</span></p>
+        </div>
+        <button class="btn-next" style="display:block" onclick="location.reload()">TRY AGAIN</button>
+    </div>
+</div>
+
+<script>
+    const dictionary = [
+        // A list
+        { word: 'car', article: 'a', icon: '🚗' },
+        { word: 'house', article: 'a', icon: '🏠' },
+        { word: 'bag', article: 'a', icon: '🎒' },
+        { word: 'teacher', article: 'a', icon: '👩‍🏫' },
+        { word: 'student', article: 'a', icon: '🧑‍🎓' },
+        { word: 'phone', article: 'a', icon: '📱' },
+        { word: 'cup', article: 'a', icon: '☕' },
+        { word: 'hat', article: 'a', icon: '👒' },
+        { word: 'shoe', article: 'a', icon: '👟' },
+        { word: 'door', article: 'a', icon: '🚪' },
+        { word: 'window', article: 'a', icon: '🪟' },
+        { word: 'flower', article: 'a', icon: '🌸' },
+        { word: 'tree', article: 'a', icon: '🌳' },
+        { word: 'bike', article: 'a', icon: '🚲' },
+        { word: 'fish', article: 'a', icon: '🐟' },
+        { word: 'zebra', article: 'a', icon: '🦓' },
+        { word: 'mouse', article: 'a', icon: '🐭' },
+        { word: 'cow', article: 'a', icon: '🐄' },
+        { word: 'ruler', article: 'a', icon: '📏' },
+        { word: 'burger', article: 'a', icon: '🍔' },
+        { word: 'cake', article: 'a', icon: '🍰' },
+        { word: 'pineapple', article: 'a', icon: '🍍' },
+        { word: 'tomato', article: 'a', icon: '🍅' },
+        
+        // AN list
+        { word: 'onion', article: 'an', icon: '🧅' },
+        { word: 'eraser', article: 'an', icon: '🧽' },
+        { word: 'elephant', article: 'an', icon: '🐘' },
+        { word: 'apple', article: 'an', icon: '🍎' },
+        { word: 'egg', article: 'an', icon: '🥚' },
+        { word: 'orange', article: 'an', icon: '🍊' },
+        { word: 'umbrella', article: 'an', icon: '☂️' },
+        { word: 'ice cream', article: 'an', icon: '🍦' },
+        { word: 'ant', article: 'an', icon: '🐜' },
+        { word: 'ear', article: 'an', icon: '👂' },
+        { word: 'eye', article: 'an', icon: '👁️' },
+        { word: 'arm', article: 'an', icon: '💪' },
+        { word: 'island', article: 'an', icon: '🏝️' },
+        { word: 'uncle', article: 'an', icon: '👨' }
+    ];
+
+    let gameState = {
+        currentPart: 1,
+        currentIndex: 0,
+        allShuffledQuestions: [], 
+        questions: [],            
+        score: 0,
+        currentWordAttempts: 0,
+        totalIncorrect: 0,
+        canAnswer: true
+    };
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function speak(text, slow = true) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = slow ? 0.6 : 0.9;
+        
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Google US English'));
+        if (femaleVoice) utterance.voice = femaleVoice;
+        
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function startGame() {
+        document.getElementById('welcome-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        
+        // Xáo trộn toàn bộ từ điển ngay từ đầu để đảm bảo tính ngẫu nhiên và không trùng
+        gameState.allShuffledQuestions = shuffle([...dictionary]);
+        
+        initPart(1);
+    }
+
+    function initPart(partNum) {
+        gameState.currentPart = partNum;
+        gameState.currentIndex = 0;
+        
+        if (partNum === 1) {
+            // Lấy 10 câu đầu tiên (0-9)
+            gameState.questions = gameState.allShuffledQuestions.slice(0, 10);
+        } else {
+            // Lấy 10 câu tiếp theo (10-19) cho phần 2, đảm bảo không trùng Phần 1
+            gameState.questions = gameState.allShuffledQuestions.slice(10, 20);
+        }
+        
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = gameState.questions[gameState.currentIndex];
+        gameState.currentWordAttempts = 0;
+        gameState.canAnswer = true;
+        
+        document.getElementById('part-info').innerText = `Part ${gameState.currentPart}`;
+        document.getElementById('question-count').innerText = `Question: ${gameState.currentIndex + 1}/10`;
+        document.getElementById('visual-icon').innerText = q.icon;
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('feedback').style.color = getCssVar('--text-color');
+        document.getElementById('next-btn').style.display = "none";
+        document.getElementById('choice-buttons').style.pointerEvents = "auto";
+        document.getElementById('choice-buttons').style.opacity = "1";
+
+        const wordDisplay = document.getElementById('word-text');
+        if (gameState.currentPart === 1) {
+            document.getElementById('hint-area').innerText = "U E O A I";
+            wordDisplay.innerHTML = `<span class="highlight-red">${q.word.charAt(0)}</span>${q.word.slice(1)}`;
+        } else {
+            document.getElementById('hint-area').innerText = "";
+            wordDisplay.innerText = q.word;
+        }
+
+        setTimeout(() => speakCurrentWord(), 500);
+    }
+
+    function speakCurrentWord() {
+        const q = gameState.questions[gameState.currentIndex];
+        speak(q.word);
+    }
+
+    function handleChoice(userChoice) {
+        if (!gameState.canAnswer) return;
+
+        const q = gameState.questions[gameState.currentIndex];
+        const feedback = document.getElementById('feedback');
+
+        if (userChoice === q.article) {
+            gameState.score++;
+            gameState.canAnswer = false;
+            feedback.innerText = "Correct Answer!";
+            feedback.style.color = getCssVar('--success-color');
+            document.getElementById('choice-buttons').style.pointerEvents = "none";
+            document.getElementById('next-btn').style.display = "block";
+            speak(`${q.article} ${q.word}`, false);
+        } else {
+            gameState.currentWordAttempts++;
+            gameState.totalIncorrect++;
+            
+            if (gameState.currentWordAttempts >= 3) {
+                gameState.canAnswer = false;
+                feedback.innerText = `Answer: ${q.article.toUpperCase()}`;
+                feedback.style.color = getCssVar('--primary-color');
+                document.getElementById('next-btn').style.display = "block";
+                speak("The answer is " + q.article, false);
+            } else {
+                feedback.innerText = `Try again! (${3 - gameState.currentWordAttempts} left)`;
+                feedback.style.color = getCssVar('--error-color');
+                const beep = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+                beep.play().catch(() => {});
+                speak("Incorrect, try again", false);
+            }
+        }
+    }
+
+    function goToNext() {
+        gameState.currentIndex++;
+        if (gameState.currentIndex >= 10) {
+            if (gameState.currentPart === 1) {
+                alert("Part 1 Finished! Let's start Part 2.");
+                initPart(2);
+            } else {
+                showFinalResults();
+            }
+        } else {
+            renderQuestion();
+        }
+    }
+
+    function showFinalResults() {
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        document.getElementById('res-total').innerText = "20";
+        document.getElementById('res-correct').innerText = gameState.score;
+        document.getElementById('res-incorrect').innerText = gameState.totalIncorrect;
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn.style.display === "block") {
+                goToNext();
+            }
+        }
+    });
+
+    function getCssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+</script>
+
+</body>
+</html>
