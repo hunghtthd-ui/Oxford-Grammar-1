@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noun Master - Singular & Plural Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #f43f5e;
+            --success: #10b981;
+            --bg: #f0f4f8;
+        }
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg);
+            touch-action: manipulation;
+        }
+        .game-card {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        .letter-box {
+            width: 45px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: white;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            cursor: default;
+        }
+        .letter-box.filled {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eef2ff;
+            cursor: pointer;
+        }
+        .letter-box.filled:hover {
+            background: #e0e7ff;
+            transform: translateY(-2px);
+        }
+        .draggable-letter {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #4338ca;
+            user-select: none;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .draggable-letter:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #4338ca;
+        }
+        .draggable-letter.used {
+            opacity: 0.2;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .pop-in {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Intro Screen -->
+    <div id="intro-screen" class="max-w-md w-full text-center bg-white p-8 rounded-3xl game-card">
+        <h1 class="text-4xl font-bold text-indigo-600 mb-6" style="font-family: 'Fredoka One', cursive;">Noun Master</h1>
+        <p class="text-gray-600 mb-8 text-lg">Test your knowledge of singular and plural nouns! 20 challenges await.</p>
+        <button id="start-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-2xl text-xl shadow-lg transition-all transform hover:scale-105 active:scale-95">
+            START CHALLENGE
+        </button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden max-w-2xl w-full">
+        <div class="bg-white p-6 md:p-10 rounded-3xl game-card relative overflow-hidden">
+            <!-- Progress Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div class="text-indigo-600 font-bold">Question: <span id="current-index">1</span>/20</div>
+                <div class="flex gap-2">
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">Correct: <span id="score-correct">0</span></span>
+                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">Fails: <span id="score-fails">0</span></span>
+                </div>
+            </div>
+
+            <!-- Visual Hint Area -->
+            <div class="flex flex-col items-center mb-6">
+                <div id="icon-display" class="flex flex-wrap justify-center gap-4 text-6xl mb-4 h-24 items-center">
+                    <!-- Icons generated here -->
+                </div>
+                <button id="audio-btn" class="flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                    Listen Word
+                </button>
+            </div>
+
+            <!-- Word Slots -->
+            <div id="word-slots" class="flex flex-wrap justify-center gap-2 mb-8">
+                <!-- Slots generated here -->
+            </div>
+
+            <!-- Draggable/Clickable Letters -->
+            <div id="letter-options" class="flex flex-wrap justify-center gap-3 mb-6">
+                <!-- Scrambled letters here -->
+            </div>
+
+            <!-- Actions -->
+            <div id="action-area" class="flex flex-col items-center gap-4 mb-4">
+                <button id="check-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-10 rounded-2xl shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                    Check Answer
+                </button>
+                
+                <div id="next-btn-container" class="hidden w-full flex justify-center">
+                    <button id="next-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-10 rounded-2xl shadow-lg transition-all transform hover:scale-105 active:scale-95">
+                        Next Question →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div id="feedback-area" class="h-12 flex items-center justify-center">
+                <p id="feedback-msg" class="text-xl font-bold"></p>
+            </div>
+            
+            <p id="retry-info" class="text-center text-sm text-gray-400 mt-4">Mistakes: <span id="mistake-count">0</span>/3</p>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="hidden max-w-md w-full text-center bg-white p-8 rounded-3xl game-card">
+        <h2 class="text-3xl font-bold text-indigo-600 mb-4" style="font-family: 'Fredoka One', cursive;">CHALLENGE COMPLETE</h2>
+        <div class="space-y-4 mb-8">
+            <p class="text-lg">Correct Answers: <span id="final-correct" class="font-bold text-green-500">0</span></p>
+            <p class="text-lg">Total Mistakes: <span id="final-fails" class="font-bold text-red-500">0</span></p>
+        </div>
+        <button onclick="location.reload()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-2xl text-xl transition-all">
+            PLAY AGAIN
+        </button>
+    </div>
+
+    <script>
+        const singularNouns = [
+            { word: 'child', icon: '👶' }, { word: 'mouse', icon: '🐭' }, { word: 'man', icon: '👨' },
+            { word: 'woman', icon: '👩' }, { word: 'person', icon: '👤' }, { word: 'sheep', icon: '🐑' },
+            { word: 'foot', icon: '🦶' }, { word: 'tooth', icon: '🦷' }, { word: 'fish', icon: '🐟' },
+            { word: 'goose', icon: '🦢' }, { word: 'knife', icon: '🔪' }, 
+            { word: 'baby', icon: '👶' }, { word: 'boy', icon: '👦' }, { word: 'strawberry', icon: '🍓' },
+            { word: 'puppy', icon: '🐶' }, { word: 'key', icon: '🔑' }, { word: 'dress', icon: '👗' },
+            { word: 'watch', icon: '⌚' }, { word: 'beach', icon: '🏖️' }, { word: 'glass', icon: '🥛' },
+            { word: 'house', icon: '🏠' }, { word: 'box', icon: '📦' }, { word: 'guitar', icon: '🎸' },
+            { word: 'computer', icon: '💻' }, { word: 'phone', icon: '📱' }
+        ];
+
+        const pluralNouns = [
+            { word: 'children', icon: '👶' }, { word: 'mice', icon: '🐭' }, { word: 'men', icon: '👨' },
+            { word: 'women', icon: '👩' }, { word: 'people', icon: '👤' }, { word: 'sheep', icon: '🐑' },
+            { word: 'feet', icon: '🦶' }, { word: 'teeth', icon: '🦷' }, { word: 'fish', icon: '🐟' },
+            { word: 'geese', icon: '🦢' }, { word: 'knives', icon: '🔪' }, 
+            { word: 'babies', icon: '👶' }, { word: 'boys', icon: '👦' }, { word: 'strawberries', icon: '🍓' },
+            { word: 'puppies', icon: '🐶' }, { word: 'keys', icon: '🔑' }, { word: 'dresses', icon: '👗' },
+            { word: 'watches', icon: '⌚' }, { word: 'beaches', icon: '🏖️' }, { word: 'glasses', icon: '🥛' },
+            { word: 'houses', icon: '🏠' }, { word: 'boxes', icon: '📦' }, { word: 'guitars', icon: '🎸' },
+            { word: 'computers', icon: '💻' }, { word: 'phones', icon: '📱' }
+        ];
+
+        const compliments = ["Well done!", "Good job!", "Excellent!", "Very good!"];
+        const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let scoreCorrect = 0;
+        let scoreFails = 0;
+        let mistakesThisTurn = 0;
+        let currentAnswer = []; // Array of { char: string, btnId: string }
+        let canInteract = true;
+
+        const playSynth = (msg) => {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(msg);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7;
+            
+            const voices = window.speechSynthesis.getVoices();
+            const femaleVoice = voices.find(v => (v.name.includes('Female') || v.name.includes('female') || v.name.includes('Google US English')) && v.lang.startsWith('en'));
+            if(femaleVoice) utterance.voice = femaleVoice;
+            window.speechSynthesis.speak(utterance);
+        };
+
+        const playFX = (type) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1046.50, ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            }
+        };
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function initGame() {
+            const selectedSingular = shuffle([...singularNouns]).slice(0, 10).map(n => ({...n, type: 'singular'}));
+            const selectedPlural = shuffle([...pluralNouns]).slice(0, 10).map(n => ({...n, type: 'plural'}));
+            currentQuestions = shuffle([...selectedSingular, ...selectedPlural]);
+            
+            currentIndex = 0;
+            scoreCorrect = 0;
+            scoreFails = 0;
+            updateScoreUI();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = currentQuestions[currentIndex];
+            mistakesThisTurn = 0;
+            currentAnswer = [];
+            canInteract = true;
+            
+            document.getElementById('current-index').innerText = currentIndex + 1;
+            document.getElementById('mistake-count').innerText = "0";
+            document.getElementById('feedback-msg').innerText = "";
+            document.getElementById('next-btn-container').classList.add('hidden');
+            document.getElementById('check-btn').classList.remove('hidden');
+            
+            // Render Icons
+            const iconArea = document.getElementById('icon-display');
+            iconArea.innerHTML = "";
+            const iconCount = q.type === 'singular' ? 1 : Math.floor(Math.random() * 4) + 2;
+            for(let i=0; i<iconCount; i++) {
+                const span = document.createElement('span');
+                span.innerText = q.icon;
+                span.className = "pop-in";
+                iconArea.appendChild(span);
+            }
+
+            // Render Slots
+            const slotArea = document.getElementById('word-slots');
+            slotArea.innerHTML = "";
+            for(let i=0; i<q.word.length; i++) {
+                const slot = document.createElement('div');
+                slot.className = "letter-box";
+                slot.id = `slot-${i}`;
+                slot.onclick = () => handleSlotClick(i); // Thêm sự kiện click vào slot
+                slotArea.appendChild(slot);
+            }
+
+            // Prepare Letters
+            let letters = q.word.split("");
+            for(let i=0; i<3; i++) {
+                letters.push(alphabet[Math.floor(Math.random() * alphabet.length)]);
+            }
+            letters = shuffle(letters);
+
+            const letterArea = document.getElementById('letter-options');
+            letterArea.innerHTML = "";
+            letters.forEach((l, idx) => {
+                const btn = document.createElement('div');
+                btn.className = "draggable-letter";
+                btn.innerText = l.toUpperCase();
+                btn.dataset.letter = l;
+                btn.dataset.id = `letter-${idx}`;
+                btn.onclick = () => handleLetterClick(btn);
+                letterArea.appendChild(btn);
+            });
+
+            setTimeout(() => playSynth(q.word), 500);
+        }
+
+        function handleLetterClick(btn) {
+            if(!canInteract || btn.classList.contains('used')) return;
+            
+            const q = currentQuestions[currentIndex];
+            if(currentAnswer.length < q.word.length) {
+                const char = btn.dataset.letter;
+                const slotIdx = currentAnswer.length;
+                
+                currentAnswer.push({ char, btnId: btn.dataset.id });
+                btn.classList.add('used');
+                
+                const slot = document.getElementById(`slot-${slotIdx}`);
+                slot.innerText = char.toUpperCase();
+                slot.classList.add('filled');
+
+                if (currentAnswer.length === q.word.length) {
+                    setTimeout(checkAnswer, 300);
+                }
+            }
+        }
+
+        // Tính năng mới: Xóa chữ cái khi nhấn vào ô slot
+        function handleSlotClick(index) {
+            if (!canInteract || index >= currentAnswer.length) return;
+
+            // Để đảm bảo tính logic (chỉ xóa chữ cái cuối cùng hoặc xóa từ vị trí đó trở đi),
+            // chúng ta sẽ xóa chữ cái được chọn và cập nhật lại mảng. 
+            // Ở đây, để đơn giản và tránh nhầm lẫn cho học sinh, ta sẽ xóa phần tử tại vị trí đó.
+            
+            const removed = currentAnswer.splice(index, 1)[0];
+            
+            // Tìm nút chữ cái tương ứng và bỏ trạng thái 'used'
+            const btn = document.querySelector(`.draggable-letter[data-id="${removed.btnId}"]`);
+            if(btn) btn.classList.remove('used');
+
+            // Vẽ lại toàn bộ các ô slot để đảm bảo thứ tự
+            refreshSlots();
+        }
+
+        function refreshSlots() {
+            const q = currentQuestions[currentIndex];
+            const slots = document.querySelectorAll('.letter-box');
+            
+            slots.forEach((slot, i) => {
+                if (i < currentAnswer.length) {
+                    slot.innerText = currentAnswer[i].char.toUpperCase();
+                    slot.classList.add('filled');
+                } else {
+                    slot.innerText = "";
+                    slot.classList.remove('filled');
+                }
+            });
+        }
+
+        function clearWord() {
+            if(!canInteract) return;
+            currentAnswer = [];
+            refreshSlots();
+            const letters = document.querySelectorAll('.draggable-letter');
+            letters.forEach(l => l.classList.remove('used'));
+        }
+
+        function checkAnswer() {
+            if(!canInteract || currentAnswer.length === 0) return;
+            
+            const q = currentQuestions[currentIndex];
+            // Nếu người dùng nhấn Check khi chưa điền đủ, báo lỗi nhẹ
+            if (currentAnswer.length < q.word.length) {
+                document.getElementById('word-slots').classList.add('shake');
+                setTimeout(() => document.getElementById('word-slots').classList.remove('shake'), 500);
+                return;
+            }
+
+            const typedWord = currentAnswer.map(a => a.char).join("").toLowerCase();
+            
+            if(typedWord === q.word.toLowerCase()) {
+                canInteract = false;
+                scoreCorrect++;
+                playFX('correct');
+                const praise = compliments[Math.floor(Math.random() * compliments.length)];
+                
+                document.getElementById('feedback-msg').innerText = praise;
+                document.getElementById('feedback-msg').className = "text-xl font-bold text-green-500 pop-in";
+                
+                document.getElementById('check-btn').classList.add('hidden');
+                document.getElementById('next-btn-container').classList.remove('hidden');
+                
+                updateScoreUI();
+                playSynth(praise);
+            } else {
+                mistakesThisTurn++;
+                scoreFails++;
+                playFX('wrong');
+                document.getElementById('mistake-count').innerText = mistakesThisTurn;
+                document.getElementById('word-slots').classList.add('shake');
+                setTimeout(() => document.getElementById('word-slots').classList.remove('shake'), 500);
+                
+                updateScoreUI();
+
+                if(mistakesThisTurn >= 3) {
+                    canInteract = false;
+                    document.getElementById('feedback-msg').innerText = `Answer: ${q.word.toUpperCase()}`;
+                    document.getElementById('feedback-msg').className = "text-xl font-bold text-red-500";
+                    document.getElementById('check-btn').classList.add('hidden');
+                    document.getElementById('next-btn-container').classList.remove('hidden');
+                } else {
+                    setTimeout(clearWord, 600);
+                }
+            }
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score-correct').innerText = scoreCorrect;
+            document.getElementById('score-fails').innerText = scoreFails;
+        }
+
+        document.getElementById('start-btn').onclick = () => {
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            initGame();
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            currentIndex++;
+            if(currentIndex < currentQuestions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        document.getElementById('check-btn').onclick = checkAnswer;
+
+        document.getElementById('audio-btn').onclick = () => {
+            playSynth(currentQuestions[currentIndex].word);
+        };
+
+        function showResults() {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-correct').innerText = scoreCorrect;
+            document.getElementById('final-fails').innerText = scoreFails;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if(document.getElementById('game-screen').classList.contains('hidden')) return;
+
+            if(e.key === 'Enter') {
+                if(!document.getElementById('next-btn-container').classList.contains('hidden')) {
+                    document.getElementById('next-btn').click();
+                } else {
+                    checkAnswer();
+                }
+            } else if(e.key === 'Backspace') {
+                if(!canInteract) return;
+                if(currentAnswer.length > 0) {
+                    const last = currentAnswer.pop();
+                    const btn = document.querySelector(`.draggable-letter[data-id="${last.btnId}"]`);
+                    if(btn) btn.classList.remove('used');
+                    refreshSlots();
+                }
+            } else if(/^[a-zA-Z]$/.test(e.key)) {
+                const letter = e.key.toLowerCase();
+                const availableBtns = Array.from(document.querySelectorAll('.draggable-letter'))
+                    .filter(b => b.dataset.letter === letter && !b.classList.contains('used'));
+                
+                if(availableBtns.length > 0) {
+                    handleLetterClick(availableBtns[0]);
+                }
+            }
+        });
+
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    </script>
+</body>
+</html>
