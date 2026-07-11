@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Grammar Challenge - Have Got</title>
+  <!-- Tailwind CSS for modern responsive utility-first design -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Font: Inter for highly legible, premium typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons for beautiful visual elements -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Simple bouncing animation for correct answers */
+    @keyframes celebrate {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .celebrate {
+      animation: celebrate 0.5s ease-in-out infinite;
+    }
+    /* CSS transition for word chips moving */
+    .word-chip {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 min-h-screen text-slate-800 flex flex-col justify-between antialiased">
+
+  <!-- Top Navigation & Progress Status Header -->
+  <header class="w-full bg-white/80 backdrop-blur-md border-b border-indigo-100 sticky top-0 z-50 px-4 py-3 shadow-sm transition-all">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md">
+          <i class="fa-solid fa-graduation-cap text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-800 tracking-tight leading-none">Grammar Challenge</h1>
+          <p class="text-xs text-indigo-500 font-medium">Practice "Have Got"</p>
+        </div>
+      </div>
+      <!-- Mode & Section Indicator -->
+      <div class="flex items-center space-x-2">
+        <span id="global-section-indicator" class="text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+          Initializing...
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-grow flex items-center justify-center p-4 md:p-6">
+    <div class="w-full max-w-2xl bg-white/90 backdrop-blur-md shadow-xl rounded-2xl border border-indigo-50 p-6 md:p-8 transition-all relative overflow-hidden">
+      
+      <!-- Screen 1: Welcome & Landing -->
+      <section id="screen-welcome" class="block text-center py-6 space-y-6">
+        <div class="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center rounded-full mx-auto shadow-lg shadow-indigo-200">
+          <i class="fa-solid fa-headphones-simple text-4xl animate-bounce"></i>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800">English Listening & Grammar Assignment</h2>
+          <p class="text-slate-500 max-w-md mx-auto text-sm md:text-base">Master grammar rules with fun interactive audio drills. Make sure your volume is on!</p>
+        </div>
+        
+        <div class="bg-indigo-50/50 rounded-xl p-4 max-w-md mx-auto border border-indigo-100 text-left space-y-3">
+          <h3 class="font-bold text-indigo-900 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-circle-info"></i> Assignment Requirements:
+          </h3>
+          <ul class="text-xs text-slate-600 space-y-2 list-disc list-inside">
+            <li><strong>Part 1 (Listening):</strong> Listen to the sentences and choose the correct form of "have got". Try to avoid mistakes!</li>
+            <li><strong>Part 2 (Sentence Builder):</strong> Reassemble scrambled word chips into a grammatically correct sentence.</li>
+            <li><strong>Mistake Limit:</strong> Maximum of 3 strikes per question. If reached, the answer will be revealed.</li>
+            <li><strong>Controls:</strong> Press <kbd class="px-1.5 py-0.5 bg-slate-200 rounded font-semibold text-[10px]">Enter</kbd> to quickly check your answer or proceed!</li>
+          </ul>
+        </div>
+
+        <button id="btn-start" class="w-full max-w-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-indigo-200 transform active:scale-95 transition-all text-lg flex items-center justify-center gap-3 mx-auto">
+          Start Assignment <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </section>
+
+      <!-- Screen 2: Dynamic Interactive Quiz Panel -->
+      <section id="screen-quiz" class="hidden space-y-6">
+        <!-- Progress Indicator -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs text-slate-400 font-semibold uppercase tracking-wider">
+            <span id="current-question-num">Question 1 of 10</span>
+            <span id="current-strike-indicator" class="text-red-500 flex items-center gap-1">
+              Strikes: 
+              <span id="strike-hearts" class="flex gap-1">
+                <i class="fa-solid fa-heart text-red-500"></i>
+                <i class="fa-solid fa-heart text-red-500"></i>
+                <i class="fa-solid fa-heart text-red-500"></i>
+              </span>
+            </span>
+          </div>
+          <!-- Progress Bar wrapper -->
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div id="exercise-progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-full w-0 transition-all duration-300"></div>
+          </div>
+        </div>
+
+        <!-- Part 1 Content Box (Listening Exercise) -->
+        <div id="part1-workspace" class="hidden space-y-6">
+          <div class="text-center py-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 space-y-4">
+            <p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider">Part 1: Listen & Select</p>
+            <div class="flex justify-center items-center gap-4">
+              <button id="p1-btn-speak" class="w-16 h-16 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-full flex items-center justify-center shadow-lg shadow-indigo-100 transition-all group" title="Listen to question">
+                <i class="fa-solid fa-volume-high text-2xl group-hover:scale-110 transition-transform"></i>
+              </button>
+              <span class="text-slate-400 text-xs">Click speaker to play sound</span>
+            </div>
+            <h3 id="p1-sentence-text" class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight mt-2">
+              I ________.
+            </h3>
+          </div>
+
+          <!-- Options Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="p1-options-container">
+            <!-- Dynamically populated options cards -->
+          </div>
+        </div>
+
+        <!-- Part 2 Content Box (Sentence Unscramble) -->
+        <div id="part2-workspace" class="hidden space-y-6">
+          <div class="text-center py-2 space-y-1">
+            <p class="text-sm font-semibold text-purple-600 uppercase tracking-wider">Part 2: Sentence Builder</p>
+            <p class="text-xs text-slate-400">Rearrange the word chips below to complete the sentence.</p>
+            <div class="flex justify-center mt-2">
+              <button id="p2-btn-speak-target" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold py-1.5 px-4 rounded-full text-xs flex items-center gap-2 transition-all active:scale-95">
+                <i class="fa-solid fa-volume-high"></i> Listen to Target Sentence
+              </button>
+            </div>
+          </div>
+
+          <!-- Answer Slots Area (Constructed sentence goes here) -->
+          <div class="space-y-2">
+            <p class="text-xs font-bold uppercase text-slate-400">Your Sentence:</p>
+            <div id="p2-answer-slots" class="min-h-[70px] w-full p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-wrap gap-2 items-center justify-start transition-all">
+              <!-- Dynamically placed chips -->
+            </div>
+          </div>
+
+          <!-- Scrambled Words Pool -->
+          <div class="space-y-2">
+            <p class="text-xs font-bold uppercase text-slate-400">Available Words (Click word block to play sound):</p>
+            <div id="p2-words-pool" class="p-4 bg-purple-50/50 border border-purple-100 rounded-2xl flex flex-wrap gap-2 items-center justify-center min-h-[70px]">
+              <!-- Dynamically rendered source word chips -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Feedback Panel (Praise/Strike Alert) -->
+        <div id="feedback-panel" class="hidden p-4 rounded-xl text-center font-bold text-sm transition-all duration-300">
+          <span id="feedback-message"></span>
+        </div>
+
+        <!-- Command Controls Footer -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
+          <button id="btn-check" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-100 transform active:scale-95 transition-all text-sm flex items-center justify-center gap-2">
+            <i class="fa-solid fa-square-check"></i> Check Answer
+          </button>
+          <button id="btn-next" class="hidden flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-indigo-100 transform active:scale-95 transition-all text-sm flex items-center justify-center gap-2">
+            Next Question <i class="fa-solid fa-arrow-right animate-pulse"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- Screen 3: Final Summary and Statistics -->
+      <section id="screen-summary" class="hidden text-center py-6 space-y-6">
+        <div class="w-24 h-24 bg-amber-100 text-amber-500 flex items-center justify-center rounded-full mx-auto shadow-inner relative">
+          <i class="fa-solid fa-trophy text-5xl"></i>
+          <span class="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full border-2 border-white">Pass</span>
+        </div>
+
+        <div class="space-y-1">
+          <h2 class="text-2xl md:text-3xl font-black text-slate-800">Assignment Finished!</h2>
+          <p class="text-slate-500 text-sm">Congratulations on completing all sections.</p>
+        </div>
+
+        <!-- Detailed Statistics Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
+          <!-- Total Correct on First Attempt Card -->
+          <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-xl space-y-1">
+            <p class="text-xs text-emerald-600 font-bold uppercase tracking-wider">Perfect Wins</p>
+            <p id="stat-perfect" class="text-2xl font-extrabold text-emerald-800">10/18</p>
+            <p class="text-[10px] text-emerald-500 leading-none">Correct on 1st try</p>
+          </div>
+
+          <!-- Total Failed Strikes Card -->
+          <div class="bg-red-50 border border-red-100 p-4 rounded-xl space-y-1">
+            <p class="text-xs text-red-600 font-bold uppercase tracking-wider">Total Strikes</p>
+            <p id="stat-strikes" class="text-2xl font-extrabold text-red-800">3</p>
+            <p class="text-[10px] text-red-500 leading-none">Incorrect tries overall</p>
+          </div>
+
+          <!-- Total Success Rate Card -->
+          <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl space-y-1">
+            <p class="text-xs text-indigo-600 font-bold uppercase tracking-wider">Accuracy Score</p>
+            <p id="stat-accuracy" class="text-2xl font-extrabold text-indigo-800">85%</p>
+            <p class="text-[10px] text-indigo-500 leading-none">Average efficiency</p>
+          </div>
+        </div>
+
+        <!-- Structured Review List -->
+        <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 text-left max-w-lg mx-auto">
+          <h3 class="font-bold text-slate-700 text-sm mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check text-indigo-500"></i> Section breakdown
+          </h3>
+          <div class="text-xs text-slate-600 space-y-2">
+            <div class="flex justify-between py-1 border-b border-slate-200">
+              <span>Listening Section (10 Qs):</span>
+              <span id="breakdown-part1" class="font-semibold text-slate-800">10/10 Finished</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span>Sentence Builder (8 Qs):</span>
+              <span id="breakdown-part2" class="font-semibold text-slate-800 font-medium">8/8 Finished</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-restart" class="w-full max-w-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-100 transform active:scale-95 transition-all text-sm flex items-center justify-center gap-2 mx-auto">
+          <i class="fa-solid fa-arrows-rotate"></i> Try Assignment Again
+        </button>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Global Responsive Footer -->
+  <footer class="w-full text-center py-4 text-xs text-slate-400 bg-white/40 border-t border-slate-200/50 mt-auto">
+    <p>© 2026 Interactive ESL Classroom. Optimized for Mobile & Desktop. Press Enter to interact.</p>
+  </footer>
+
+  <script>
+    // Audio Synth Web Context & Helper Functions
+    let audioCtx = null;
+
+    /**
+     * Lazy initializes browser's AudioContext for synthesized sounds.
+     */
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    /**
+     * Synthesizes a positive chime arpeggio using basic sine waves.
+     */
+    function playCorrectChime() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      // Arpeggio notes: C5 (523.25Hz), E5 (659.25Hz), G5 (783.99Hz), C6 (1046.50Hz)
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+
+        gainNode.gain.setValueAtTime(0, now + idx * 0.08);
+        gainNode.gain.linearRampToValueAtTime(0.12, now + idx * 0.08 + 0.04);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.35);
+      });
+    }
+
+    /**
+     * Synthesizes a double lower buzzy error tone.
+     */
+    function playIncorrectBuzzer() {
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      // Two sequential short buzzing tones
+      const times = [0, 0.12];
+      times.forEach((startTime) => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(130, now + startTime);
+        osc.frequency.linearRampToValueAtTime(100, now + startTime + 0.1);
+
+        gainNode.gain.setValueAtTime(0.12, now + startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + startTime + 0.1);
+
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        osc.start(now + startTime);
+        osc.stop(now + startTime + 0.12);
+      });
+    }
+
+    // Speech Synthesis System
+    let chosenVoice = null;
+
+    /**
+     * Searches for a high-quality female English voice on the current platform.
+     */
+    function findBestVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      
+      // Attempt to target common high-quality female/natural English voices
+      let match = voices.find(v => v.lang.startsWith('en') && 
+        (v.name.includes('Google US English') || 
+         v.name.includes('Samantha') || 
+         v.name.includes('Zira') || 
+         v.name.includes('Hazel') || 
+         v.name.includes('female') || 
+         v.name.includes('Natural')));
+      
+      if (!match) {
+        // Fallback to any English voice
+        match = voices.find(v => v.lang.startsWith('en'));
+      }
+      if (!match) {
+        // Ultimate fallback to default system voice
+        match = voices[0];
+      }
+      
+      chosenVoice = match;
+    }
+
+    // Trigger loading voices (some platforms update async)
+    window.speechSynthesis.onvoiceschanged = findBestVoice;
+    findBestVoice();
+
+    /**
+     * Executes SpeechSynthesis for a target string.
+     * Custom configured for a slow, clear female educational pace.
+     */
+    function speakText(text) {
+      if (!text) return;
+      window.speechSynthesis.cancel(); // Stop any overlapping speech
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
+      }
+      
+      // Configuration for clear, deliberate pronunciation suitable for language learners
+      utterance.rate = 0.80;  // slow pace
+      utterance.pitch = 1.08; // slightly higher pitch to reinforce clear tone
+      
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Praise Strings Array
+    const praiseStrings = ["Well done", "Good job", "Excellent", "Very good"];
+
+    function getPraiseWord() {
+      return praiseStrings[Math.floor(Math.random() * praiseStrings.length)];
+    }
+
+    // Immutable Assignment Data Sets
+    const part1SourceData = [
+      { id: 1, text: "I ________.", read: "I have got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "have got" },
+      { id: 2, text: "She ________.", read: "she hasn't got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "hasn't got" },
+      { id: 3, text: "They ________.", read: "they haven't got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "haven't got" },
+      { id: 4, text: "Tom ________.", read: "Tom has got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "has got" },
+      { id: 5, text: "We ________.", read: "we haven't got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "haven't got" },
+      { id: 6, text: "My sister ________.", read: "my sister hasn't got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "hasn't got" },
+      { id: 7, text: "You ________.", read: "you have got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "have got" },
+      { id: 8, text: "The dog ________.", read: "the dog has got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "has got" },
+      { id: 9, text: "My friends ________.", read: "my friends haven't got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "haven't got" },
+      { id: 10, text: "My mom and dad ________.", read: "my mom and dad have got", options: ["have got", "has got", "haven't got", "hasn't got"], correct: "have got" }
+    ];
+
+    const part2SourceData = [
+      "You have not got a brown guitar",
+      "Isabel has got blue eyes",
+      "Jenny hasn't got a purple umbrella",
+      "Kate and Jamie haven’t got a black computer",
+      "He has got a white piano",
+      "We’ve got a small green TV",
+      "She’s got a big old dog",
+      "The cat has got four small legs"
+    ];
+
+    // Current Session State
+    let activePart = 1; // 1 = Part 1, 2 = Part 2
+    let part1Questions = [];
+    let part2Questions = [];
+    let currentQuestionIdx = 0;
+    
+    // Statistics & Counters
+    let currentQuestionStrikes = 0;
+    let totalStrikesAccumulated = 0;
+    let perfectFirstTries = 0;
+    let questionAnswerState = 'answering'; // 'answering' | 'graded'
+
+    // Selected state trackers
+    let selectedOptionText = ""; // For Part 1
+    let constructedWords = [];   // For Part 2 built words state
+    let remainingPoolWords = [];  // For Part 2 available words pool state
+
+    // Helper functions
+    function shuffleArray(array) {
+      const cloned = [...array];
+      for (let i = cloned.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+      }
+      return cloned;
+    }
+
+    /**
+     * Completely resets and builds the session with randomized arrays.
+     */
+    function startNewAssignment() {
+      // Find voices just in case they loaded late
+      findBestVoice();
+
+      // Configure questions with complete random orders
+      part1Questions = shuffleArray(part1SourceData);
+      
+      // For Part 2, parse standard sentence strings into objects with scrambled word lists
+      part2Questions = shuffleArray(part2SourceData).map((sentenceStr, index) => {
+        // Keep spaces safe and split
+        const formatted = sentenceStr.trim().replace(/\s+/g, ' ');
+        const wordsArray = formatted.split(' ');
+        return {
+          id: index + 1,
+          correctSentence: formatted,
+          wordsList: wordsArray
+        };
+      });
+
+      // Reset statistics
+      activePart = 1;
+      currentQuestionIdx = 0;
+      currentQuestionStrikes = 0;
+      totalStrikesAccumulated = 0;
+      perfectFirstTries = 0;
+      questionAnswerState = 'answering';
+
+      // Switch screens
+      document.getElementById('screen-welcome').classList.add('hidden');
+      document.getElementById('screen-summary').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+
+      loadCurrentQuestion();
+    }
+
+    /**
+     * Determines which part is active and initiates appropriate UI updates.
+     */
+    function loadCurrentQuestion() {
+      // Reset specific question variables
+      currentQuestionStrikes = 0;
+      questionAnswerState = 'answering';
+      hideFeedback();
+      updateStrikeUI();
+
+      // Update generic footer/header controls
+      document.getElementById('btn-check').classList.remove('hidden');
+      document.getElementById('btn-next').classList.add('hidden');
+
+      if (activePart === 1) {
+        document.getElementById('global-section-indicator').innerText = "Part 1: Listening";
+        document.getElementById('global-section-indicator').className = "text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1.5 rounded-full uppercase tracking-wider";
+        
+        document.getElementById('part1-workspace').classList.remove('hidden');
+        document.getElementById('part2-workspace').classList.add('hidden');
+        
+        document.getElementById('current-question-num').innerText = `Question ${currentQuestionIdx + 1} of ${part1Questions.length}`;
+        
+        // Update global progress bar
+        const progressPercentage = ((currentQuestionIdx) / (part1Questions.length + part2Questions.length)) * 100;
+        document.getElementById('exercise-progress-bar').style.width = `${progressPercentage}%`;
+
+        setupPart1Question();
+      } else {
+        document.getElementById('global-section-indicator').innerText = "Part 2: Builder";
+        document.getElementById('global-section-indicator').className = "text-xs bg-purple-100 text-purple-800 font-bold px-3 py-1.5 rounded-full uppercase tracking-wider";
+        
+        document.getElementById('part1-workspace').classList.add('hidden');
+        document.getElementById('part2-workspace').classList.remove('hidden');
+        
+        document.getElementById('current-question-num').innerText = `Question ${currentQuestionIdx + 1} of ${part2Questions.length}`;
+        
+        // Update global progress bar
+        const progressPercentage = ((part1Questions.length + currentQuestionIdx) / (part1Questions.length + part2Questions.length)) * 100;
+        document.getElementById('exercise-progress-bar').style.width = `${progressPercentage}%`;
+
+        setupPart2Question();
+      }
+    }
+
+    /**
+     * Handles Part 1 layout, populating lists and triggering voice synthesis.
+     */
+    function setupPart1Question() {
+      const q = part1Questions[currentQuestionIdx];
+      selectedOptionText = ""; // Clear current choice
+      
+      // Update displayed sentence label
+      document.getElementById('p1-sentence-text').innerText = q.text;
+
+      // Populate interactive option grids
+      const container = document.getElementById('p1-options-container');
+      container.innerHTML = "";
+
+      q.options.forEach((optText, index) => {
+        const optionLetter = String.fromCharCode(65 + index); // A, B, C, D
+        
+        // Create full card container
+        const card = document.createElement('div');
+        card.className = "option-card flex items-center justify-between p-4 bg-slate-50 border border-slate-200 hover:border-indigo-200 rounded-xl cursor-pointer transition-all active:scale-[0.99] select-none";
+        card.setAttribute('data-option', optText);
+        card.onclick = () => selectPart1Option(card, optText);
+
+        // Option Content info
+        const contentDiv = document.createElement('div');
+        contentDiv.className = "flex items-center gap-3";
+        
+        const badge = document.createElement('span');
+        badge.className = "w-7 h-7 flex items-center justify-center bg-slate-200 text-slate-700 text-xs font-bold rounded-lg option-badge";
+        badge.innerText = optionLetter;
+        
+        const textSpan = document.createElement('span');
+        textSpan.className = "font-semibold text-slate-700";
+        textSpan.innerText = optText;
+
+        contentDiv.appendChild(badge);
+        contentDiv.appendChild(textSpan);
+
+        // Independent TTS read button for just the option itself
+        const ttsBtn = document.createElement('button');
+        ttsBtn.className = "w-8 h-8 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 flex items-center justify-center rounded-lg transition-colors";
+        ttsBtn.title = `Listen to ${optText}`;
+        ttsBtn.onclick = (e) => {
+          e.stopPropagation(); // Avoid selecting card when listening
+          speakText(optText);
+        };
+        ttsBtn.innerHTML = `<i class="fa-solid fa-volume-low"></i>`;
+
+        card.appendChild(contentDiv);
+        card.appendChild(ttsBtn);
+        container.appendChild(card);
+      });
+
+      // Auto play question voice track with latency protection
+      setTimeout(() => {
+        speakText(q.read);
+      }, 400);
+    }
+
+    function selectPart1Option(selectedCard, optText) {
+      if (questionAnswerState !== 'answering') return; // Selection locked during grading
+
+      // Reset previous selections
+      document.querySelectorAll('.option-card').forEach(card => {
+        card.className = "option-card flex items-center justify-between p-4 bg-slate-50 border border-slate-200 hover:border-indigo-200 rounded-xl cursor-pointer transition-all active:scale-[0.99] select-none";
+        card.querySelector('.option-badge').className = "w-7 h-7 flex items-center justify-center bg-slate-200 text-slate-700 text-xs font-bold rounded-lg option-badge";
+      });
+
+      // Highlight active choice
+      selectedCard.className = "option-card flex items-center justify-between p-4 bg-indigo-50 border-2 border-indigo-500 rounded-xl cursor-pointer transition-all select-none shadow-md shadow-indigo-50";
+      selectedCard.querySelector('.option-badge').className = "w-7 h-7 flex items-center justify-center bg-indigo-600 text-white text-xs font-bold rounded-lg option-badge";
+      
+      selectedOptionText = optText;
+    }
+
+    /**
+     * Handles Part 2 layouts, rendering target blank spaces and scrambling cards.
+     */
+    function setupPart2Question() {
+      const q = part2Questions[currentQuestionIdx];
+      
+      constructedWords = [];
+      remainingPoolWords = shuffleArray(q.wordsList); // Shuffles original word order
+
+      renderPart2Workspace();
+
+      // Trigger automatic TTS recitation
+      setTimeout(() => {
+        speakText(q.correctSentence);
+      }, 400);
+    }
+
+    /**
+     * Renders both the Word Pool and Active Selection workspace.
+     */
+    function renderPart2Workspace() {
+      const q = part2Questions[currentQuestionIdx];
+
+      // 1. Render Active Answer slots/boxes
+      const answerContainer = document.getElementById('p2-answer-slots');
+      answerContainer.innerHTML = "";
+
+      if (constructedWords.length === 0) {
+        // Show placeholders for styling and guides
+        q.wordsList.forEach(() => {
+          const slot = document.createElement('div');
+          slot.className = "h-11 w-16 bg-slate-100 border border-slate-200 rounded-xl border-dashed";
+          answerContainer.appendChild(slot);
+        });
+      } else {
+        constructedWords.forEach((word, idx) => {
+          const chip = document.createElement('div');
+          chip.className = "word-chip flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold text-xs md:text-sm py-2 px-3 rounded-xl shadow-md cursor-pointer select-none active:scale-95";
+          chip.innerHTML = `<span>${word}</span> <i class="fa-solid fa-xmark text-[10px] opacity-80"></i>`;
+          
+          // Tapping built item returns it to pool
+          chip.onclick = () => {
+            if (questionAnswerState !== 'answering') return;
+            constructedWords.splice(idx, 1);
+            remainingPoolWords.push(word);
+            renderPart2Workspace();
+          };
+
+          answerContainer.appendChild(chip);
+        });
+      }
+
+      // 2. Render Source Words Pool
+      const poolContainer = document.getElementById('p2-words-pool');
+      poolContainer.innerHTML = "";
+
+      if (remainingPoolWords.length === 0 && questionAnswerState === 'answering') {
+        poolContainer.innerHTML = `<span class="text-xs text-slate-400 italic">All words placed. Check your answer!</span>`;
+      } else {
+        remainingPoolWords.forEach((word, idx) => {
+          const chip = document.createElement('div');
+          chip.className = "word-chip flex items-center gap-1 bg-white border border-slate-200 hover:border-purple-300 hover:shadow-sm text-slate-700 font-semibold text-xs md:text-sm p-1 rounded-xl cursor-pointer select-none active:scale-95";
+          
+          // Clickable tiny TTS micro-button inside block
+          const soundBtn = document.createElement('button');
+          soundBtn.className = "w-6 h-6 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:text-purple-600 hover:bg-purple-50";
+          soundBtn.innerHTML = `<i class="fa-solid fa-volume-low text-[10px]"></i>`;
+          soundBtn.onclick = (e) => {
+            e.stopPropagation();
+            speakText(word);
+          };
+
+          const textSpan = document.createElement('span');
+          textSpan.className = "px-2 py-1";
+          textSpan.innerText = word;
+
+          // Main body action inserts into constructed pools
+          textSpan.onclick = () => {
+            if (questionAnswerState !== 'answering') return;
+            remainingPoolWords.splice(idx, 1);
+            constructedWords.push(word);
+            renderPart2Workspace();
+          };
+
+          chip.appendChild(soundBtn);
+          chip.appendChild(textSpan);
+          poolContainer.appendChild(chip);
+        });
+      }
+    }
+
+    /**
+     * Updates strike counter UI elements
+     */
+    function updateStrikeUI() {
+      const container = document.getElementById('strike-hearts');
+      container.innerHTML = "";
+      
+      const maxStrikes = 3;
+      const remaining = maxStrikes - currentQuestionStrikes;
+
+      for (let i = 0; i < maxStrikes; i++) {
+        const heart = document.createElement('i');
+        if (i < remaining) {
+          heart.className = "fa-solid fa-heart text-red-500 transition-all duration-300 transform scale-110";
+        } else {
+          heart.className = "fa-regular fa-heart text-slate-300 transition-all duration-300";
+        }
+        container.appendChild(heart);
+      }
+    }
+
+    /**
+     * Provides immediate stylized UI notifications without blocking alert boxes.
+     */
+    function showFeedback(type, text) {
+      const panel = document.getElementById('feedback-panel');
+      const msg = document.getElementById('feedback-message');
+      
+      panel.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200', 'bg-red-50', 'text-red-800', 'border-red-200', 'bg-amber-50', 'text-amber-800', 'border-amber-200');
+
+      if (type === 'success') {
+        panel.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+        msg.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${text}`;
+      } else if (type === 'error') {
+        panel.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+        msg.innerHTML = `<i class="fa-solid fa-circle-xmark animate-shake"></i> ${text}`;
+      } else if (type === 'revealed') {
+        panel.classList.add('bg-amber-50', 'text-amber-800', 'border', 'border-amber-200');
+        msg.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${text}`;
+      }
+    }
+
+    function hideFeedback() {
+      document.getElementById('feedback-panel').classList.add('hidden');
+    }
+
+    /**
+     * Checks the student's solution.
+     */
+    function evaluateSubmission() {
+      if (questionAnswerState !== 'answering') return;
+
+      if (activePart === 1) {
+        evaluatePart1();
+      } else {
+        evaluatePart2();
+      }
+    }
+
+    /**
+     * Grading logic for Listening Practice
+     */
+    function evaluatePart1() {
+      if (!selectedOptionText) {
+        showFeedback('error', 'Please select an option before checking!');
+        return;
+      }
+
+      const q = part1Questions[currentQuestionIdx];
+      
+      if (selectedOptionText === q.correct) {
+        // Correct Choice
+        handleQuestionSuccess(q.correct);
+      } else {
+        // Incorrect Choice
+        handleQuestionFailure(`Incorrect. That is not the correct auxiliary verb.`);
+      }
+    }
+
+    /**
+     * Grading logic for Sentence Builder
+     */
+    function evaluatePart2() {
+      const q = part2Questions[currentQuestionIdx];
+      const builtSentence = constructedWords.join(' ').trim();
+      
+      // Clean string comparison, treating smart apostrophes gracefully if needed
+      const normalize = (str) => str.replace(/[\u2018\u2019]/g, "'").toLowerCase().trim();
+
+      if (constructedWords.length === 0) {
+        showFeedback('error', 'Please tap word chips to construct a sentence first!');
+        return;
+      }
+
+      if (normalize(builtSentence) === normalize(q.correctSentence)) {
+        handleQuestionSuccess(q.correctSentence);
+      } else {
+        handleQuestionFailure(`Incorrect sentence order. Try rearranging the words.`);
+      }
+    }
+
+    /**
+     * Triggers when user input passes grading logic.
+     */
+    function handleQuestionSuccess(correctAnswer) {
+      questionAnswerState = 'graded';
+      playCorrectChime();
+
+      if (currentQuestionStrikes === 0) {
+        perfectFirstTries++;
+      }
+
+      const praise = getPraiseWord();
+      speakText(`${praise}!`);
+
+      showFeedback('success', `<strong>${praise}!</strong> Correct: "${correctAnswer}"`);
+      
+      // Lock options interaction
+      document.getElementById('btn-check').classList.add('hidden');
+      document.getElementById('btn-next').classList.remove('hidden');
+      document.getElementById('btn-next').focus(); // Automatically focus next button for seamless Enter navigation
+    }
+
+    /**
+     * Triggers when user input fails grading logic.
+     */
+    function handleQuestionFailure(feedbackText) {
+      currentQuestionStrikes++;
+      totalStrikesAccumulated++;
+      playIncorrectBuzzer();
+      updateStrikeUI();
+
+      if (currentQuestionStrikes < 3) {
+        // Allow retry
+        showFeedback('error', `${feedbackText} Attempt ${currentQuestionStrikes}/3. Try again!`);
+        
+        // Reset inputs to give clean slate
+        if (activePart === 1) {
+          selectedOptionText = "";
+          document.querySelectorAll('.option-card').forEach(card => {
+            card.className = "option-card flex items-center justify-between p-4 bg-slate-50 border border-slate-200 hover:border-indigo-200 rounded-xl cursor-pointer transition-all active:scale-[0.99] select-none";
+            card.querySelector('.option-badge').className = "w-7 h-7 flex items-center justify-center bg-slate-200 text-slate-700 text-xs font-bold rounded-lg option-badge";
+          });
+        } else {
+          // Send all words back to pool
+          const q = part2Questions[currentQuestionIdx];
+          constructedWords = [];
+          remainingPoolWords = shuffleArray(q.wordsList);
+          renderPart2Workspace();
+        }
+      } else {
+        // Strike limit exceeded (3 failed attempts -> reveal answer)
+        questionAnswerState = 'graded';
+        
+        if (activePart === 1) {
+          const q = part1Questions[currentQuestionIdx];
+          showFeedback('revealed', `Attempt limit reached. Correct answer is: <strong>${q.correct}</strong>`);
+          
+          // Outline the correct choice in yellow/amber
+          document.querySelectorAll('.option-card').forEach(card => {
+            if (card.getAttribute('data-option') === q.correct) {
+              card.className = "option-card flex items-center justify-between p-4 bg-amber-50 border-2 border-amber-500 rounded-xl select-none shadow-md shadow-amber-50";
+              card.querySelector('.option-badge').className = "w-7 h-7 flex items-center justify-center bg-amber-600 text-white text-xs font-bold rounded-lg option-badge";
+            } else {
+              card.className = "option-card flex items-center justify-between p-4 bg-slate-50/50 border border-slate-200 rounded-xl opacity-60 select-none";
+            }
+          });
+        } else {
+          const q = part2Questions[currentQuestionIdx];
+          showFeedback('revealed', `Attempt limit reached. Correct layout is: <br><strong class="text-sm">"${q.correctSentence}"</strong>`);
+          
+          // Auto assemble correct layouts in workspaces
+          constructedWords = [...q.wordsList];
+          remainingPoolWords = [];
+          renderPart2Workspace();
+        }
+
+        // Prompt to proceed
+        document.getElementById('btn-check').classList.add('hidden');
+        document.getElementById('btn-next').classList.remove('hidden');
+        document.getElementById('btn-next').focus();
+      }
+    }
+
+    /**
+     * Increments indices or updates sections to proceed.
+     */
+    function advanceChallenge() {
+      if (activePart === 1) {
+        if (currentQuestionIdx < part1Questions.length - 1) {
+          currentQuestionIdx++;
+          loadCurrentQuestion();
+        } else {
+          // Transition from Part 1 to Part 2
+          activePart = 2;
+          currentQuestionIdx = 0;
+          loadCurrentQuestion();
+        }
+      } else {
+        if (currentQuestionIdx < part2Questions.length - 1) {
+          currentQuestionIdx++;
+          loadCurrentQuestion();
+        } else {
+          // All parts complete, compile results
+          showFinalSummary();
+        }
+      }
+    }
+
+    /**
+     * Gathers compiled indicators and renders final scores screen.
+     */
+    function showFinalSummary() {
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-summary').classList.remove('hidden');
+
+      document.getElementById('global-section-indicator').innerText = "Finished";
+      document.getElementById('global-section-indicator').className = "text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-full uppercase tracking-wider";
+
+      const totalQuestionsCount = part1Questions.length + part2Questions.length;
+      
+      // Calculate rates
+      document.getElementById('stat-perfect').innerText = `${perfectFirstTries}/${totalQuestionsCount}`;
+      document.getElementById('stat-strikes').innerText = totalStrikesAccumulated;
+      
+      const successRatio = Math.round((perfectFirstTries / totalQuestionsCount) * 100);
+      document.getElementById('stat-accuracy').innerText = `${successRatio}%`;
+
+      document.getElementById('breakdown-part1').innerText = `${part1Questions.length}/${part1Questions.length} Complete`;
+      document.getElementById('breakdown-part2').innerText = `${part2Questions.length}/${part2Questions.length} Complete`;
+    }
+
+    // Set up interactive click listeners
+    document.getElementById('btn-start').onclick = startNewAssignment;
+    document.getElementById('btn-restart').onclick = startNewAssignment;
+    document.getElementById('btn-check').onclick = evaluateSubmission;
+    document.getElementById('btn-next').onclick = advanceChallenge;
+    
+    // Play button bindings
+    document.getElementById('p1-btn-speak').onclick = () => {
+      const q = part1Questions[currentQuestionIdx];
+      speakText(q.read);
+    };
+
+    document.getElementById('p2-btn-speak-target').onclick = () => {
+      const q = part2Questions[currentQuestionIdx];
+      speakText(q.correctSentence);
+    };
+
+    // Keyboard controls support
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        // Determine visible target
+        const welcomeScreen = document.getElementById('screen-welcome');
+        const summaryScreen = document.getElementById('screen-summary');
+        
+        if (!welcomeScreen.classList.contains('hidden')) {
+          startNewAssignment();
+        } else if (!summaryScreen.classList.contains('hidden')) {
+          startNewAssignment();
+        } else {
+          // Currently in quiz mode
+          if (questionAnswerState === 'answering') {
+            evaluateSubmission();
+          } else {
+            advanceChallenge();
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
