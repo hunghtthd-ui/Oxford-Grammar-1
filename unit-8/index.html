@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive English Vocabulary Exercise</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Fredoka', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+      min-height: 100vh;
+    }
+
+    .letter-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.2rem;
+      height: 2.8rem;
+      border-bottom: 3px solid #0284c7;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0369a1;
+      margin: 0 3px;
+      transition: all 0.2s ease;
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    .letter-slot.filled {
+      border-bottom-color: #10b981;
+      color: #047857;
+      background-color: #ecfdf5;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .letter-space {
+      width: 1.2rem;
+      display: inline-block;
+    }
+
+    .letter-hyphen {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #64748b;
+      margin: 0 4px;
+    }
+
+    /* Bounce animation for success */
+    @keyframes bounce-short {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .animate-bounce-short {
+      animation: bounce-short 0.5s ease infinite;
+    }
+
+    /* Shaking animation for incorrect attempt */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-between p-3 sm:p-6 text-slate-800">
+
+  <!-- Top Navigation / Header -->
+  <header class="w-full max-w-2xl flex items-center justify-between mb-4 px-2">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-2xl bg-sky-500 text-white flex items-center justify-center font-bold text-xl shadow-md font-display">
+        🔤
+      </div>
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold font-display text-sky-900 leading-tight">Word Master</h1>
+        <p class="text-xs text-sky-600 font-medium">Demonstratives & Clothing Practice</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button id="voice-test-btn" onclick="speakCurrentWord()" title="Replay voice" class="p-2 rounded-xl bg-white text-sky-600 hover:bg-sky-50 shadow-sm border border-sky-100 transition active:scale-95">
+        🔊
+      </button>
+      <div class="bg-white/80 border border-sky-100 px-3 py-1.5 rounded-xl shadow-sm text-xs sm:text-sm font-semibold text-sky-800">
+        Question <span id="current-q-num" class="text-sky-600 font-bold">1</span> / <span id="total-q-num">14</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="w-full max-w-2xl bg-slate-200/80 rounded-full h-2.5 mb-6 overflow-hidden shadow-inner">
+    <div id="progress-bar" class="bg-sky-500 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: 7.14%"></div>
+  </div>
+
+  <!-- Start Modal Overlay (Mandatory for Speech Autoplay Browser Policy) -->
+  <div id="start-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border border-sky-100">
+      <div class="w-20 h-20 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 font-display">
+        🎧
+      </div>
+      <h2 class="text-2xl font-bold font-display text-slate-800 mb-2">Welcome to Vocabulary Quiz!</h2>
+      <p class="text-slate-600 text-sm mb-4 leading-relaxed">
+        Listen carefully, observe the image, and type the correct word or phrase. Sound will auto-play on each question.
+      </p>
+
+      <!-- Question Order Switcher -->
+      <div class="flex items-center justify-between mb-6 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-left">
+        <div>
+          <span class="text-xs font-bold text-slate-700 block">Question Order</span>
+          <span id="order-mode-desc" class="text-[11px] text-slate-500 font-medium">Original Sequential Order</span>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="shuffle-toggle" class="sr-only peer" onchange="toggleOrderLabel(this)">
+          <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+        </label>
+      </div>
+
+      <button onclick="startQuiz()" class="w-full py-3.5 px-6 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 active:translate-y-0 font-display text-lg">
+        Start Exercise 🚀
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Card -->
+  <main class="w-full max-w-2xl glass-card rounded-3xl p-4 sm:p-8 border border-white/80 mb-auto shadow-xl">
+    
+    <!-- Question Area -->
+    <div id="quiz-container" class="space-y-6">
+      
+      <!-- Image Display Container (Maintains Aspect Ratio without Cropping) -->
+      <div class="relative w-full h-56 sm:h-72 bg-slate-100/80 rounded-2xl overflow-hidden border border-slate-200/80 flex items-center justify-center p-2 shadow-inner">
+        <!-- Main Image -->
+        <img 
+          id="vocab-image" 
+          src="" 
+          alt="Vocabulary clue" 
+          class="max-w-full max-h-full object-contain rounded-lg transition-all duration-300 transform hover:scale-105"
+          onerror="handleImageError(this)"
+        />
+
+        <!-- Emoji Fallback (Shown if Image fails to load) -->
+        <div id="emoji-fallback" class="hidden flex-col items-center justify-center text-center p-4">
+          <span id="fallback-emoji-icon" class="text-7xl sm:text-8xl mb-2 filter drop-shadow-md"></span>
+          <span id="fallback-hint-text" class="text-xs text-slate-500 font-medium">Visual Clue</span>
+        </div>
+
+        <!-- Audio Replay Button Overlay -->
+        <button 
+          onclick="speakCurrentWord()" 
+          class="absolute bottom-3 right-3 bg-white/90 hover:bg-sky-50 text-sky-600 p-3 rounded-2xl shadow-lg border border-sky-100 transition flex items-center gap-2 active:scale-95 group"
+          title="Listen again"
+        >
+          <span class="text-xl group-hover:scale-110 transition-transform">🔊</span>
+          <span class="text-xs font-bold text-sky-700 hidden sm:inline">Listen Again</span>
+        </button>
+
+        <!-- Hint Badge -->
+        <div id="hint-badge" class="absolute top-3 left-3 bg-slate-900/75 text-white text-xs px-3 py-1.5 rounded-full font-medium backdrop-blur-md shadow-sm">
+          Observe carefully
+        </div>
+      </div>
+
+      <!-- Letter Underscores Visual Guide -->
+      <div class="text-center py-2">
+        <p class="text-xs uppercase tracking-widest text-slate-400 font-bold mb-3">Letter Count & Structure</p>
+        <div id="underscores-container" class="flex flex-wrap justify-center items-center gap-y-2 min-h-[3.5rem] px-2">
+          <!-- Dynamically generated letter slots -->
+        </div>
+      </div>
+
+      <!-- User Answer Input Form -->
+      <div class="space-y-4">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="user-input" 
+            autocomplete="off" 
+            autocorrect="off" 
+            autocapitalize="off" 
+            spellcheck="false"
+            placeholder="Type your answer here..."
+            class="w-full px-5 py-4 text-center text-xl sm:text-2xl font-bold font-display text-slate-800 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-sky-500 focus:bg-white transition shadow-sm placeholder:text-slate-300 placeholder:font-normal"
+            oninput="handleInputTyping()"
+          />
+          <button 
+            type="button" 
+            onclick="clearInput()" 
+            id="clear-btn" 
+            class="hidden absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-lg p-1"
+          >
+            ✖
+          </button>
+        </div>
+
+        <!-- Feedback Message Area -->
+        <div id="feedback-area" class="hidden rounded-2xl p-4 text-center text-sm font-bold transition-all duration-300">
+          <p id="feedback-text" class="text-base font-display"></p>
+        </div>
+
+        <!-- Correct Answer Display (Shown when failed > 3 times) -->
+        <div id="answer-reveal-box" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center shadow-sm">
+          <p class="text-xs text-amber-700 font-semibold uppercase tracking-wider mb-1">Correct Answer</p>
+          <p id="revealed-answer-text" class="text-xl font-bold text-amber-900 font-display"></p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 pt-2">
+          <button 
+            id="check-btn" 
+            onclick="checkAnswer()" 
+            class="flex-1 py-4 bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-bold rounded-2xl shadow-lg shadow-sky-500/25 transition transform hover:-translate-y-0.5 font-display text-lg flex items-center justify-center gap-2"
+          >
+            <span>Check Answer</span>
+            <span class="text-xs bg-sky-600 px-2 py-0.5 rounded-lg opacity-80 font-mono hidden sm:inline">↵ Enter</span>
+          </button>
+
+          <button 
+            id="next-btn" 
+            onclick="nextQuestion()" 
+            class="hidden flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold rounded-2xl shadow-lg shadow-emerald-500/25 transition transform hover:-translate-y-0.5 font-display text-lg flex items-center justify-center gap-2"
+          >
+            <span>Next Question</span>
+            <span class="text-xl">➔</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quiz Completion Stats View (Initially Hidden) -->
+    <div id="stats-container" class="hidden text-center space-y-6 py-4">
+      <div class="w-24 h-24 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-5xl mx-auto shadow-inner font-display animate-bounce-short">
+        🏆
+      </div>
+      <div>
+        <h2 class="text-3xl font-bold font-display text-slate-800 mb-1">Awesome Job!</h2>
+        <p class="text-slate-500 text-sm">You have completed all <span id="stat-completed-q">15</span> vocabulary questions.</p>
+      </div>
+
+      <!-- Score Dashboard -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-sky-50/80 border border-sky-100 p-4 rounded-2xl text-center">
+          <span class="text-xs text-sky-600 font-semibold uppercase tracking-wider block mb-1">First Try Correct</span>
+          <span id="stat-first-try" class="text-3xl font-bold text-sky-800 font-display">0</span>
+        </div>
+        <div class="bg-emerald-50/80 border border-emerald-100 p-4 rounded-2xl text-center">
+          <span class="text-xs text-emerald-600 font-semibold uppercase tracking-wider block mb-1">Accuracy</span>
+          <span id="stat-accuracy" class="text-3xl font-bold text-emerald-800 font-display">0%</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-left space-y-2 text-sm">
+        <div class="flex justify-between text-slate-600">
+          <span>Total Questions:</span>
+          <span id="stat-total-q" class="font-bold text-slate-800">15</span>
+        </div>
+        <div class="flex justify-between text-slate-600">
+          <span>Total Mistakes:</span>
+          <span id="stat-total-errors" class="font-bold text-red-500">0</span>
+        </div>
+      </div>
+
+      <button 
+        onclick="restartQuiz()" 
+        class="w-full py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-500/30 transition transform hover:-translate-y-0.5 font-display text-lg"
+      >
+        Practice Again 🔄
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-slate-500 py-3">
+    Interactive English Learning Application &bull; Optimized for Mobile & Desktop
+  </footer>
+
+  <script>
+    // Vocabulary list updated to the exact requested 15-item order
+    const vocabData = [
+      { 
+        word: "This", 
+        hint: "Near (Singular)", 
+        emoji: "👉", 
+        img: "https://yourhomework.net/yhw/f/yhw-voca/2023/08/2/202308221309592592895.jpg?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "that", 
+        hint: "Far away (Singular)", 
+        emoji: "👉", 
+        img: "https://yourhomework.net/yhw/f/yhw-voca/2023/08/2/202308221310125082965.jpg?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "these", 
+        hint: "Near (Plural)", 
+        emoji: "🤲", 
+        img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBDGnk7Kjp45-MvOsyOST1qKy71EKgnv0E4oZdYUD6kw&s=10?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "those", 
+        hint: "Far away (Plural)", 
+        emoji: "👈", 
+        img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQClZsKHK-t5QkAcmkYOKumfrcg3hdR2wMwymUVTGT3vQ&s=10?auto=format&fit=crop&w=800&q=80"
+      },
+      { 
+        word: "this hat", 
+        hint: "Hat nearby", 
+        emoji: "🧢", 
+        img: "https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "that dress", 
+        hint: "Dress over there", 
+        emoji: "👗", 
+        img: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "these shoes", 
+        hint: "Shoes nearby", 
+        emoji: "👟", 
+        img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz6NCmBpqiaVhlO5OmfGEiBYSLasmVeContgnVhBJMiQ&s?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "those pants", 
+        hint: "Pants over there", 
+        emoji: "👖", 
+        img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "that coat", 
+        hint: "Coat over there", 
+        emoji: "🧥", 
+        img: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "this skirt", 
+        hint: "Skirt nearby", 
+        emoji: "👗", 
+        img: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "those socks", 
+        hint: "Socks over there", 
+        emoji: "🧦", 
+        img: "https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "these shorts", 
+        hint: "Shorts nearby", 
+        emoji: "🩳", 
+        img: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "that T-shirt", 
+        hint: "T-shirt over there", 
+        emoji: "👕", 
+        img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT92YJpLqAbovlfWLDiR55CGCX_hRD7S1MR3-Qs7rb-XWdjYippP-AT7ATc&s=10?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "those pants", 
+        hint: "Pants over there", 
+        emoji: "👖", 
+        img: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=80" 
+      },
+      { 
+        word: "these shirts", 
+        hint: "Shirts nearby", 
+        emoji: "👔", 
+        img: "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80" 
+      }
+    ];
+
+    const praises = ["Well done!", "Good job!", "Excellent!", "Very good!"];
+
+    // App state
+    let activeVocabData = [...vocabData];
+    let currentIndex = 0;
+    let attemptsCount = 0;
+    let totalErrors = 0;
+    let firstTryCount = 0;
+    let synth = window.speechSynthesis;
+    let femaleVoice = null;
+    let audioCtx = null;
+
+    function initVoices() {
+      if (!synth) return;
+      const updateVoices = () => {
+        const voices = synth.getVoices();
+        // Priority search for English female voice (e.g. Samantha, Zira, Google UK English Female, etc.)
+        femaleVoice = voices.find(v => v.lang.startsWith('en') && (
+          v.name.includes('Female') || 
+          v.name.includes('Samantha') || 
+          v.name.includes('Zira') || 
+          v.name.includes('Victoria') || 
+          v.name.includes('Google UK English Female') ||
+          v.name.includes('Karen')
+        )) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+      };
+      
+      updateVoices();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = updateVoices;
+      }
+    }
+
+    function handleImageError(img) {
+      img.style.display = 'none';
+      const fallbackElem = document.getElementById('emoji-fallback');
+      if (fallbackElem) {
+        fallbackElem.classList.remove('hidden');
+        fallbackElem.classList.add('flex');
+      }
+    }
+
+    function speakText(text) {
+      if (!synth) return;
+      synth.cancel(); // Cancel any ongoing speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.8; // Slow and clear pace for learners
+      utterance.pitch = 1.0;
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
+      synth.speak(utterance);
+    }
+
+    function playAudioTone(type) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+          osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+          osc.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.35);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+          osc.frequency.exponentialRampToValueAtTime(130.81, audioCtx.currentTime + 0.25); // C3
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+        }
+      } catch (e) {
+        console.error("Audio synth error:", e);
+      }
+    }
+
+    // Toggle description text on overlay
+    function toggleOrderLabel(checkbox) {
+      const label = document.getElementById('order-mode-desc');
+      if (checkbox.checked) {
+        label.textContent = "Shuffled / Random Order 🔀";
+      } else {
+        label.textContent = "Original Sequential Order 📋";
+      }
+    }
+
+    // Utility: Fisher-Yates array shuffle
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Speech synthesis function
+    function speakCurrentWord() {
+      if (currentIndex < activeVocabData.length) {
+        speakText(activeVocabData[currentIndex].word);
+      }
+    }
+
+    // Build letter slots / underscores dynamically
+    function renderUnderscores(userInputVal = "") {
+      const currentVocab = activeVocabData[currentIndex].word;
+      const container = document.getElementById('underscores-container');
+      container.innerHTML = "";
+
+      const normalizedInput = userInputVal.toLowerCase();
+
+      for (let i = 0; i < currentVocab.length; i++) {
+        const char = currentVocab[i];
+
+        if (char === ' ') {
+          const spaceDiv = document.createElement('div');
+          spaceDiv.className = 'letter-space';
+          container.appendChild(spaceDiv);
+        } else if (char === '-') {
+          const hyphenDiv = document.createElement('div');
+          hyphenDiv.className = 'letter-hyphen';
+          hyphenDiv.textContent = '-';
+          container.appendChild(hyphenDiv);
+        } else {
+          const slot = document.createElement('div');
+          const userChar = normalizedInput[i] || "";
+          
+          if (userChar) {
+            slot.className = 'letter-slot filled';
+            slot.textContent = userChar;
+          } else {
+            slot.className = 'letter-slot';
+            slot.textContent = '';
+          }
+          container.appendChild(slot);
+        }
+      }
+    }
+
+    // Load Question
+    function loadQuestion() {
+      const current = activeVocabData[currentIndex];
+      attemptsCount = 0;
+
+      // Update Header Info
+      document.getElementById('current-q-num').textContent = currentIndex + 1;
+      document.getElementById('total-q-num').textContent = activeVocabData.length;
+      document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / activeVocabData.length) * 100}%`;
+
+      // Update Image & Fallback Emoji
+      const imgElem = document.getElementById('vocab-image');
+      const fallbackElem = document.getElementById('emoji-fallback');
+      
+      imgElem.style.display = 'block';
+      imgElem.src = current.img;
+      fallbackElem.classList.add('hidden');
+      fallbackElem.classList.remove('flex');
+      
+      document.getElementById('fallback-emoji-icon').textContent = current.emoji;
+      document.getElementById('fallback-hint-text').textContent = current.hint;
+      document.getElementById('hint-badge').textContent = current.hint;
+
+      // Clear Input & Feedback
+      const inputElem = document.getElementById('user-input');
+      inputElem.value = "";
+      inputElem.disabled = false;
+      inputElem.classList.remove('border-emerald-500', 'border-red-500', 'animate-shake');
+      
+      document.getElementById('clear-btn').classList.add('hidden');
+      document.getElementById('feedback-area').classList.add('hidden');
+      document.getElementById('answer-reveal-box').classList.add('hidden');
+
+      // Buttons visibility
+      document.getElementById('check-btn').classList.remove('hidden');
+      document.getElementById('next-btn').classList.add('hidden');
+
+      // Render Empty Underscores
+      renderUnderscores("");
+
+      // Focus input
+      setTimeout(() => {
+        inputElem.focus();
+      }, 100);
+
+      // Speak Current Word Automatically
+      speakCurrentWord();
+    }
+
+    function handleInputTyping() {
+      const val = document.getElementById('user-input').value;
+      const clearBtn = document.getElementById('clear-btn');
+      
+      if (val.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      renderUnderscores(val);
+    }
+
+    function clearInput() {
+      const inputElem = document.getElementById('user-input');
+      inputElem.value = "";
+      document.getElementById('clear-btn').classList.add('hidden');
+      renderUnderscores("");
+      inputElem.focus();
+    }
+
+    // Check Answer Logic
+    function checkAnswer() {
+      const inputElem = document.getElementById('user-input');
+      const userVal = inputElem.value.trim().toLowerCase();
+      const targetVal = activeVocabData[currentIndex].word.toLowerCase();
+
+      if (!userVal) return;
+
+      const feedbackArea = document.getElementById('feedback-area');
+      const feedbackText = document.getElementById('feedback-text');
+
+      if (userVal === targetVal) {
+        // --- CORRECT ANSWER ---
+        playAudioTone('correct');
+
+        if (attemptsCount === 0) {
+          firstTryCount++;
+        }
+
+        inputElem.disabled = true;
+        inputElem.classList.add('border-emerald-500');
+
+        // Pick random praise
+        const praise = praises[Math.floor(Math.random() * praises.length)];
+        
+        feedbackArea.className = "rounded-2xl p-4 text-center transition-all duration-300 bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm";
+        feedbackText.textContent = `🎉 ${praise}`;
+        feedbackArea.classList.remove('hidden');
+
+        // Speak praise
+        speakText(praise);
+
+        // Hide check, show next button
+        document.getElementById('check-btn').classList.add('hidden');
+        document.getElementById('next-btn').classList.remove('hidden');
+        document.getElementById('next-btn').focus();
+
+      } else {
+        // --- INCORRECT ANSWER ---
+        attemptsCount++;
+        totalErrors++;
+        playAudioTone('wrong');
+
+        inputElem.classList.add('animate-shake', 'border-red-500');
+        setTimeout(() => inputElem.classList.remove('animate-shake'), 400);
+
+        feedbackArea.className = "rounded-2xl p-4 text-center transition-all duration-300 bg-red-100 text-red-800 border border-red-300 shadow-sm";
+        feedbackText.textContent = `❌ Try again! (Attempt ${attemptsCount})`;
+        feedbackArea.classList.remove('hidden');
+
+        // Check if exceeded max allowed failures (> 3 times)
+        if (attemptsCount > 3) {
+          // Reveal correct answer
+          document.getElementById('revealed-answer-text').textContent = activeVocabData[currentIndex].word;
+          document.getElementById('answer-reveal-box').classList.remove('hidden');
+          
+          feedbackText.textContent = `💡 Don't worry! Here is the correct answer:`;
+          
+          inputElem.value = activeVocabData[currentIndex].word;
+          renderUnderscores(activeVocabData[currentIndex].word);
+
+          document.getElementById('check-btn').classList.add('hidden');
+          document.getElementById('next-btn').classList.remove('hidden');
+          document.getElementById('next-btn').focus();
+        } else {
+          // Reset input field for retry
+          setTimeout(() => {
+            inputElem.value = "";
+            renderUnderscores("");
+            inputElem.classList.remove('border-red-500');
+            inputElem.focus();
+          }, 1200);
+        }
+      }
+    }
+
+    // Advance to next question
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < activeVocabData.length) {
+        loadQuestion();
+      } else {
+        showFinalStats();
+      }
+    }
+
+    // Final Statistics Display
+    function showFinalStats() {
+      document.getElementById('quiz-container').classList.add('hidden');
+      document.getElementById('stats-container').classList.remove('hidden');
+
+      const totalQ = activeVocabData.length;
+      document.getElementById('stat-first-try').textContent = `${firstTryCount} / ${totalQ}`;
+      document.getElementById('stat-total-errors').textContent = totalErrors;
+
+      const completedElem = document.getElementById('stat-completed-q');
+      if (completedElem) completedElem.textContent = totalQ;
+
+      const totalQElem = document.getElementById('stat-total-q');
+      if (totalQElem) totalQElem.textContent = totalQ;
+
+      const accuracy = Math.round((firstTryCount / totalQ) * 100);
+      document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+
+      speakText("Congratulations! You have completed the exercise.");
+    }
+
+    // Restart Quiz
+    function restartQuiz() {
+      currentIndex = 0;
+      attemptsCount = 0;
+      totalErrors = 0;
+      firstTryCount = 0;
+
+      const isShuffle = document.getElementById('shuffle-toggle')?.checked;
+      activeVocabData = isShuffle ? shuffleArray(vocabData) : [...vocabData];
+
+      document.getElementById('stats-container').classList.add('hidden');
+      document.getElementById('quiz-container').classList.remove('hidden');
+
+      loadQuestion();
+    }
+
+    // Initial Overlay Start
+    function startQuiz() {
+      initVoices();
+      const isShuffle = document.getElementById('shuffle-toggle')?.checked;
+      activeVocabData = isShuffle ? shuffleArray(vocabData) : [...vocabData];
+
+      document.getElementById('start-overlay').classList.add('hidden');
+      loadQuestion();
+    }
+
+    // Keyboard Event Listener: Allow Enter key to trigger check / next question
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const startOverlay = document.getElementById('start-overlay');
+        if (!startOverlay.classList.contains('hidden')) {
+          startQuiz();
+          return;
+        }
+
+        const nextBtn = document.getElementById('next-btn');
+        if (!nextBtn.classList.contains('hidden')) {
+          nextQuestion();
+          return;
+        }
+
+        const checkBtn = document.getElementById('check-btn');
+        if (!checkBtn.classList.contains('hidden')) {
+          checkAnswer();
+        }
+      }
+    });
+
+    // Window load check
+    window.onload = function() {
+      initVoices();
+    };
+  </script>
+</body>
+</html>
